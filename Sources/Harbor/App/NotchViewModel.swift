@@ -35,7 +35,7 @@ enum NookTab: String, CaseIterable, Identifiable {
 
 /// O que aparece nas "asas" do notch fechado.
 enum ClosedActivity: Equatable {
-    case none, music, timer, claude, meeting, alert
+    case none, music, timer, claude, meeting, download, alert
 }
 
 final class NotchViewModel: ObservableObject {
@@ -69,6 +69,7 @@ final class NotchViewModel: ObservableObject {
         case .none: return 0
         case .alert: return 128
         case .meeting: return 78
+        case .download: return 72
         default: return notchSize.height + 16
         }
     }

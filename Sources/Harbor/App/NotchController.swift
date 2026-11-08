@@ -21,6 +21,7 @@ final class NotchController {
     let keys = MediaKeyInterceptor()
     let pins = AppPinStore()
     let mic = MicController()
+    let downloads = DownloadsMonitor()
 
     private var panel: NotchPanel!
     private var screen: NSScreen!
@@ -57,6 +58,12 @@ final class NotchController {
         pins.onAlert = { [weak self] a in self?.alerts.show(a, duration: 1.8) }
         mic.onAlert = { [weak self] a in self?.alerts.show(a, duration: 1.6) }
         mic.start()
+        downloads.onFinished = { [weak self] url in
+            self?.shelf.add(url)
+            self?.alerts.show(NotchAlert(icon: "arrow.down.circle.fill", title: url.lastPathComponent,
+                                         tint: Theme.green), duration: 3.5)
+        }
+        downloads.start()
         timer.onFinish = { [weak self] in
             guard let self else { return }
             let focusEnded = self.timer.mode == .pause // já trocou de modo
@@ -235,6 +242,7 @@ final class NotchController {
                 .environmentObject(keys)
                 .environmentObject(pins)
                 .environmentObject(mic)
+                .environmentObject(downloads)
             let host = NSHostingView(rootView: root)
             host.sizingOptions = []
             host.frame = NSRect(origin: .zero, size: rect.size)
@@ -293,6 +301,7 @@ final class NotchController {
     private func computeActivity() -> ClosedActivity {
         if alerts.current != nil { return .alert }
         if let m = calendar.nextMeeting, m.start.timeIntervalSinceNow < 10 * 60 { return .meeting }
+        if !downloads.items.isEmpty { return .download }
         if claude.workingSession != nil { return .claude }
         if media.info?.isPlaying == true { return .music }
         if timer.isActive { return .timer }
