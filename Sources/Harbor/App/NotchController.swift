@@ -23,6 +23,7 @@ final class NotchController {
     let mic = MicController()
     let downloads = DownloadsMonitor()
     let github = GitHubStatus()
+    let spotify = SpotifyAPI()
 
     private var panel: NotchPanel!
     private var screen: NSScreen!
@@ -248,6 +249,7 @@ final class NotchController {
                 .environmentObject(mic)
                 .environmentObject(downloads)
                 .environmentObject(github)
+                .environmentObject(spotify)
             let host = NSHostingView(rootView: root)
             host.sizingOptions = []
             host.frame = NSRect(origin: .zero, size: rect.size)
