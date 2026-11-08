@@ -4,6 +4,21 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 
 ## [Unreleased]
 
+## [2.1.0] - 2026-11-08
+
+### Adicionado
+- **Mudo global do microfone** (⌥M) com bolha: laranja quando um app usa o microfone, vermelha no mudo.
+- **Downloads ao vivo** no notch (Chrome, Edge, Brave, Safari e Firefox). Ao concluir, o arquivo vai para a Bandeja.
+- **Badges do Dock** nas bolhas de apps fixados.
+- **Aba PRs**: status dos checks de CI e das revisões dos seus PRs, PRs aguardando sua revisão e avisos quando algo muda.
+- **Spotify**: curtir a música atual e ver/pular para músicas da fila (Web API, login OAuth PKCE).
+- Certificado de assinatura estável ("Harbor Dev"): as permissões não se perdem mais a cada build.
+- Estrutura de repositório: Makefile, scripts de build/release/assinatura, CI e releases no GitHub, documentação.
+
+### Alterado
+- Bolhas de apps fixados agora ficam à direita do notch, junto das demais.
+- Atalhos em Ajustes exibidos em duas colunas; versão lida do bundle.
+
 ## [2.0.0] - 2026-11-08
 
 ### Adicionado
