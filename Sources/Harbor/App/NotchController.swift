@@ -22,6 +22,7 @@ final class NotchController {
     let pins = AppPinStore()
     let mic = MicController()
     let downloads = DownloadsMonitor()
+    let github = GitHubStatus()
 
     private var panel: NotchPanel!
     private var screen: NSScreen!
@@ -65,6 +66,8 @@ final class NotchController {
         }
         downloads.start()
         pins.startBadges()
+        github.onAlert = { [weak self] a in self?.alerts.show(a, duration: 4) }
+        github.start()
         timer.onFinish = { [weak self] in
             guard let self else { return }
             let focusEnded = self.timer.mode == .pause // já trocou de modo
@@ -244,6 +247,7 @@ final class NotchController {
                 .environmentObject(pins)
                 .environmentObject(mic)
                 .environmentObject(downloads)
+                .environmentObject(github)
             let host = NSHostingView(rootView: root)
             host.sizingOptions = []
             host.frame = NSRect(origin: .zero, size: rect.size)

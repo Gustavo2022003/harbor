@@ -161,6 +161,7 @@ struct OpenNotchView: View {
                 case .nook: NookHomeView()
                 case .media: MediaTabView()
                 case .clipboard: ClipboardTabView()
+                case .prs: PRsTabView()
                 case .calendar: CalendarTabView()
                 case .tray: TrayTabView()
                 case .camera: CameraTabView()

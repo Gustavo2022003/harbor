@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum NookTab: String, CaseIterable, Identifiable {
-    case nook, media, clipboard, calendar, tray, camera, odometer, tools, settings
+    case nook, media, clipboard, prs, calendar, tray, camera, odometer, tools, settings
     var id: String { rawValue }
 
     var title: String {
@@ -9,6 +9,7 @@ enum NookTab: String, CaseIterable, Identifiable {
         case .nook: return "Início"
         case .media: return "Mídia"
         case .clipboard: return "Copiados"
+        case .prs: return "PRs"
         case .calendar: return "Agenda"
         case .tray: return "Bandeja"
         case .camera: return "Espelho"
@@ -23,6 +24,7 @@ enum NookTab: String, CaseIterable, Identifiable {
         case .nook: return "rectangle.topthird.inset.filled"
         case .media: return "play.fill"
         case .clipboard: return "doc.on.clipboard.fill"
+        case .prs: return "arrow.triangle.pull"
         case .calendar: return "calendar"
         case .tray: return "tray.fill"
         case .camera: return "camera.fill"
@@ -114,5 +116,5 @@ final class NotchViewModel: ObservableObject {
     }
 
     /// Largura aproximada da barra de abas (para a área de hover).
-    let tabBarWidthEstimate: CGFloat = 500
+    let tabBarWidthEstimate: CGFloat = 560
 }
