@@ -4,6 +4,8 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 
 ## [Unreleased]
 
+## [2.2.0] - 2026-11-08
+
 ### Adicionado
 - **Manual ilustrado em PDF** (`docs/manual/Harbor-Manual.pdf`) e um PDF por tutorial (`docs/manual/tutoriais/`), gerados com `make docs`.
 - Banners do README no visual do Harbor.
