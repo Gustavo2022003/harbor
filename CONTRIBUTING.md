@@ -44,4 +44,4 @@ Antes de abrir o PR, adicione o que mudou na seção `## [Unreleased]` do `CHANG
 - **major** (`3.0.0`): mudanças que quebram algo, como dados ou preferências.
 
 1. Em `dev`, renomeie `## [Unreleased]` para `## [X.Y.Z] - AAAA-MM-DD` e crie um novo `## [Unreleased]` vazio.
-2. `make release VERSION=X.Y.Z`. Para publicar a partir do Mac: `scripts/release.sh X.Y.Z --local`.
+2. `make release VERSION=X.Y.Z`: mescla em `main`, cria a tag, compila, assina e publica a release (tudo neste Mac).

@@ -1,5 +1,5 @@
 # Harbor ⚓️ — atalhos de desenvolvimento
-.PHONY: build run install dist icon signing clean release release-local help
+.PHONY: build run install dist icon signing clean release help
 
 build:            ## Compila build/Harbor.app
 	@scripts/build.sh
@@ -19,11 +19,8 @@ icon:             ## Regera Resources/AppIcon.icns a partir de scripts/make-icon
 signing:          ## Cria o certificado "Harbor Dev" (uma vez por Mac)
 	@scripts/setup-signing.sh
 
-release:          ## Release via GitHub Actions: make release VERSION=2.2.0
+release:          ## Compila, assina e publica a release: make release VERSION=2.2.0
 	@scripts/release.sh $(VERSION)
-
-release-local:    ## Release compilada e publicada deste Mac: make release-local VERSION=2.2.0
-	@scripts/release.sh $(VERSION) --local
 
 clean:            ## Apaga artefatos de build
 	@rm -rf .build build dist

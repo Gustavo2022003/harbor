@@ -81,7 +81,7 @@ make run       # compila e abre
 | `make dist` | Gera `dist/Harbor-<versão>.zip` e `.dmg` |
 | `make icon` | Regera o ícone a partir de `scripts/make-icon.swift` |
 | `make signing` | Cria e instala o certificado de assinatura local |
-| `make release VERSION=x.y.z` | Release (veja abaixo) |
+| `make release VERSION=x.y.z` | Publica uma release (veja abaixo) |
 
 > **Por que um certificado próprio?** O macOS associa as permissões (Acessibilidade, Gravação de Tela, Câmera…) à assinatura do app. Com a assinatura ad-hoc, cada build é visto como um app novo e as permissões se perdem. O certificado "Harbor Dev" deixa a assinatura estável.
 
@@ -141,14 +141,13 @@ harbor/
 │   └── Views/                 # island, abas e componentes
 ├── scripts/
 │   ├── build.sh               # compila, empacota, assina (+ --run / --install / --dist)
-│   ├── release.sh             # versão → merge dev→main → tag → release
+│   ├── release.sh             # versão → merge dev→main → tag → build → GitHub Release
 │   ├── setup-signing.sh       # certificado "Harbor Dev"
 │   └── make-icon.sh / .swift  # ícone gerado por código
 ├── docs/
 │   └── ARCHITECTURE.md
 └── .github/
-    ├── workflows/ci.yml       # build em push/PR para dev e main
-    └── workflows/release.yml  # build + assinatura + GitHub Release ao receber uma tag vX.Y.Z
+    └── pull_request_template.md
 ```
 
 Detalhes técnicos em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
@@ -164,13 +163,10 @@ Commits seguem o Conventional Commits. O fluxo completo está em [CONTRIBUTING.m
 ```bash
 # 1. em dev: mova as notas de "Unreleased" para "## [2.2.0] - AAAA-MM-DD" no CHANGELOG
 # 2. publique:
-make release VERSION=2.2.0          # tag → GitHub Actions compila, assina e publica
-make release-local VERSION=2.2.0    # ou: compila, assina e publica a partir deste Mac
+make release VERSION=2.2.0   # merge dev → main, tag, compila, assina e publica no GitHub Releases
 ```
 
-**CI/CD:**
-- `ci.yml` compila a cada push ou PR em `dev` e `main` e guarda o `.zip` como artefato.
-- `release.yml` publica a release com `.zip` e `.dmg`. Para assinar com o certificado estável, cadastre os segredos `HARBOR_P12_BASE64` e `HARBOR_P12_PASSWORD` no repositório.
+As releases são compiladas e assinadas neste Mac, com o certificado "Harbor Dev". O projeto não usa GitHub Actions.
 
 ## Solução de problemas
 

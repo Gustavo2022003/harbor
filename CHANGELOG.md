@@ -13,7 +13,7 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 - **Aba PRs**: status dos checks de CI e das revisões dos seus PRs, PRs aguardando sua revisão e avisos quando algo muda.
 - **Spotify**: curtir a música atual e ver/pular para músicas da fila (Web API, login OAuth PKCE).
 - Certificado de assinatura estável ("Harbor Dev"): as permissões não se perdem mais a cada build.
-- Estrutura de repositório: Makefile, scripts de build/release/assinatura, CI e releases no GitHub, documentação.
+- Estrutura de repositório: Makefile, scripts de build/release/assinatura, releases no GitHub (publicadas localmente), documentação.
 
 ### Alterado
 - Bolhas de apps fixados agora ficam à direita do notch, junto das demais.
