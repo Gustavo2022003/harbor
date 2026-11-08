@@ -70,6 +70,7 @@ Quando há algo acontecendo, o island cresce para os lados. A prioridade, da mai
 ```bash
 git clone https://github.com/Gustavo2022003/harbor.git && cd harbor
 make signing   # uma vez por Mac: cria o certificado "Harbor Dev" (mantém as permissões entre builds)
+make hooks     # uma vez por clone: roda o CI local antes de cada git push
 make run       # compila e abre
 ```
 
@@ -79,6 +80,8 @@ make run       # compila e abre
 | `make run` | Compila e abre |
 | `make install` | Instala em `/Applications` |
 | `make dist` | Gera `dist/Harbor-<versão>.zip` e `.dmg` |
+| `make ci` | CI local (veja abaixo) |
+| `make hooks` | Ativa o CI automático antes de cada `git push` |
 | `make icon` | Regera o ícone a partir de `scripts/make-icon.swift` |
 | `make signing` | Cria e instala o certificado de assinatura local |
 | `make release VERSION=x.y.z` | Publica uma release (veja abaixo) |
@@ -141,9 +144,11 @@ harbor/
 │   └── Views/                 # island, abas e componentes
 ├── scripts/
 │   ├── build.sh               # compila, empacota, assina (+ --run / --install / --dist)
+│   ├── ci.sh                  # CI local (antes de push e release)
 │   ├── release.sh             # versão → merge dev→main → tag → build → GitHub Release
 │   ├── setup-signing.sh       # certificado "Harbor Dev"
 │   └── make-icon.sh / .swift  # ícone gerado por código
+├── .githooks/pre-push         # chama o scripts/ci.sh
 ├── docs/
 │   └── ARCHITECTURE.md
 └── .github/
@@ -167,6 +172,19 @@ make release VERSION=2.2.0   # merge dev → main, tag, compila, assina e public
 ```
 
 As releases são compiladas e assinadas neste Mac, com o certificado "Harbor Dev". O projeto não usa GitHub Actions.
+
+### CI local
+
+O `scripts/ci.sh` faz o papel de um CI, mas roda no seu Mac. Ele roda **sozinho antes de cada `git push`** (depois do `make hooks`) e **antes de cada `make release`**. Se algo falhar, o push ou a release são cancelados.
+
+| Etapa | O que verifica |
+|---|---|
+| Projeto | `VERSION` no formato X.Y.Z, seção `[Unreleased]` no CHANGELOG, `Info.plist` válido, ícone, sintaxe dos scripts |
+| Convenções e segurança | Nenhum `@State`; nenhum certificado, chave privada ou token do GitHub no repositório |
+| Compilação | `swift build -c release` (mostra os erros e conta os avisos) |
+| Teste de fumaça | Abre o app em modo `--snapshot` e confere se todas as abas renderizam (capturas em `.build/ci/shots`) |
+
+Leva cerca de 30 s. Num push que não mexe em código (só docs, por exemplo), o teste de fumaça é pulado. Para pular tudo numa emergência: `git push --no-verify`.
 
 ## Solução de problemas
 

@@ -14,6 +14,7 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 - **Spotify**: curtir a música atual e ver/pular para músicas da fila (Web API, login OAuth PKCE).
 - Certificado de assinatura estável ("Harbor Dev"): as permissões não se perdem mais a cada build.
 - Estrutura de repositório: Makefile, scripts de build/release/assinatura, releases no GitHub (publicadas localmente), documentação.
+- CI local (`make ci`): roda antes de cada push e de cada release, com validações, build e teste de fumaça de todas as abas.
 
 ### Alterado
 - Bolhas de apps fixados agora ficam à direita do notch, junto das demais.

@@ -3,6 +3,7 @@
 #
 #   scripts/release.sh 2.2.0   → atualiza VERSION, merge dev → main, cria a tag, compila,
 #                                assina com o certificado "Harbor Dev" e publica no GitHub Releases.
+#                                Antes de tudo, roda o CI local (scripts/ci.sh): se falhar, nada muda.
 #
 # Antes: adicione a seção "## [X.Y.Z] - AAAA-MM-DD" no CHANGELOG.md (na branch dev).
 set -euo pipefail
@@ -14,6 +15,9 @@ NEW="${1:-}"
 [[ "$(git branch --show-current)" == "dev" ]] || { echo "❌ Rode a partir da branch dev."; exit 1; }
 grep -q "^## \[$NEW\]" CHANGELOG.md || { echo "❌ Adicione a seção '## [$NEW] - data' no CHANGELOG.md."; exit 1; }
 git rev-parse "v$NEW" >/dev/null 2>&1 && { echo "❌ A tag v$NEW já existe."; exit 1; }
+
+scripts/ci.sh || { echo "❌ CI local falhou: release cancelada (nada foi alterado)."; exit 1; }
+export HARBOR_SKIP_CI=1   # já validado acima; não roda de novo no hook de push
 
 echo "$NEW" > VERSION
 git add VERSION

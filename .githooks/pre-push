@@ -1,0 +1,14 @@
+#!/bin/bash
+# Roda o CI local antes de cada push. Pular: git push --no-verify  (ou HARBOR_SKIP_CI=1 git push)
+[[ "${HARBOR_SKIP_CI:-}" == "1" ]] && exit 0
+cd "$(git rev-parse --show-toplevel)" || exit 1
+
+# Só o que está sendo enviado importa: se nada mudou em código, valida rápido.
+MODE=""
+while read -r _ local_sha _ remote_sha; do
+  [[ "$local_sha" =~ ^0+$ ]] && continue                     # apagando branch
+  if [[ "$remote_sha" =~ ^0+$ ]]; then RANGE="$local_sha"; else RANGE="$remote_sha..$local_sha"; fi
+  git diff --name-only $RANGE 2>/dev/null | grep -qE '^(Sources|Resources|Package\.swift)' || MODE="--quick"
+done
+echo "🔎 CI local antes do push…"
+exec scripts/ci.sh $MODE

@@ -27,11 +27,13 @@ Escopos comuns: `notch`, `media`, `spotify`, `mic`, `downloads`, `github`, `pins
 ## Dia a dia
 
 ```bash
+make hooks               # uma vez por clone: CI local antes de cada push
 git checkout dev && git pull
 git checkout -b feat/minha-feature
 make run                 # compila e abre
 # … código …
 git commit -m "feat(x): …"
+git push -u origin HEAD  # o CI local roda aqui e bloqueia o push se falhar
 gh pr create --base dev
 ```
 
