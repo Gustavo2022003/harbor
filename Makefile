@@ -25,13 +25,7 @@ ci:               ## CI local: valida, compila e abre o app renderizando cada ab
 hooks:            ## Ativa o CI automático antes de cada git push (uma vez por clone)
 	@git config core.hooksPath .githooks && echo "✅ Hook pre-push ativo"
 
-release:          ## Compila, assina e publica a ci:               ## CI local: valida, compila e abre o app renderizando cada aba
-	@scripts/ci.sh
-
-hooks:            ## Ativa o CI automático antes de cada git push (uma vez por clone)
-	@git config core.hooksPath .githooks && echo "✅ Hook pre-push ativo"
-
-release: make release VERSION=2.2.0
+release:          ## CI + compila, assina e publica: make release VERSION=2.2.0
 	@scripts/release.sh $(VERSION)
 
 clean:            ## Apaga artefatos de build
