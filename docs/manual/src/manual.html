@@ -1,0 +1,658 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<title>Manual do Harbor</title>
+<!--
+  Fonte do manual em PDF. Gere com:  make docs   (scripts/make-docs.sh)
+  ?only=<id-do-capítulo> renderiza só um capítulo (usado para os PDFs individuais).
+-->
+<style>
+:root{
+  --n1:#183A66; --n2:#0B1D3A; --n3:#040A16;
+  --amber:#FF9F0A; --gold:#FFD27A; --flame:#FF6A00; --cyan:#64D2FF; --pink:#FF375F; --green:#30D158; --blue:#0A84FF;
+  --ink:#EEF4FF; --mute:#A3B4CF; --dim:#6F82A3;
+  --card:rgba(255,255,255,.045); --card2:rgba(255,255,255,.08); --line:rgba(255,255,255,.10);
+  --mono: ui-monospace,"SF Mono",Menlo,monospace;
+}
+@page{ size:A4; margin:0 }
+*{ box-sizing:border-box; -webkit-print-color-adjust:exact; print-color-adjust:exact }
+html,body{ margin:0; background:var(--n3); color:var(--ink);
+  font-family:-apple-system,BlinkMacSystemFont,"SF Pro Text","Helvetica Neue",sans-serif; font-size:10pt; line-height:1.45 }
+body{ counter-reset:pg }
+b,strong{ color:#fff; font-weight:650 }
+code,kbd{ font-family:var(--mono); font-size:.88em }
+code{ background:rgba(100,210,255,.10); color:var(--cyan); padding:1px 5px; border-radius:5px }
+kbd{ display:inline-block; min-width:1.7em; text-align:center; padding:0 6px; border-radius:6px;
+  background:linear-gradient(#2a3550,#1a2236); border:1px solid rgba(255,255,255,.14); border-bottom-width:2px; color:#fff; font-weight:600 }
+.ui{ color:var(--gold); font-weight:600; white-space:nowrap }
+.path{ color:var(--gold); font-weight:600 }
+.path i{ font-style:normal; color:var(--dim); margin:0 3px }
+
+/* ── Página ─────────────────────────────────────────── */
+.page{ width:210mm; height:297mm; position:relative; overflow:hidden; page-break-after:always; break-after:page;
+  padding:17mm 15mm 16mm; counter-increment:pg;
+  background:
+    radial-gradient(120% 60% at 85% -10%, rgba(255,159,10,.13), transparent 60%),
+    radial-gradient(90% 50% at -10% 105%, rgba(100,210,255,.10), transparent 60%),
+    linear-gradient(165deg, var(--n2) 0%, #08152b 45%, var(--n3) 100%); }
+.page:last-child{ page-break-after:auto }
+.waves{ position:absolute; left:0; right:0; bottom:0; height:22mm; opacity:.55; pointer-events:none }
+.run{ position:absolute; top:7mm; left:15mm; right:15mm; display:flex; align-items:center; gap:7px;
+  font-size:8pt; letter-spacing:.08em; text-transform:uppercase; color:var(--dim) }
+.run img{ width:15px; height:15px }
+.run .sp{ flex:1 }
+.run .ch{ color:var(--amber); font-weight:700 }
+.foot{ position:absolute; bottom:7mm; right:15mm; font-size:8pt; color:var(--dim) }
+.foot::after{ content:counter(pg) }
+
+/* ── Capa ───────────────────────────────────────────── */
+.cover{ display:flex; flex-direction:column; align-items:center; text-align:center; padding-top:0 }
+.cover .run,.cover .foot{ display:none }
+.cover .island{ margin-top:0; width:118mm; height:17mm; background:#000; border-radius:0 0 11mm 11mm;
+  box-shadow:0 18px 50px rgba(0,0,0,.6), 0 0 60px rgba(255,159,10,.18); display:flex; align-items:center; justify-content:space-between; padding:0 7mm }
+.cover .island .art{ width:9mm; height:9mm; border-radius:2.4mm; background:linear-gradient(135deg,var(--gold),var(--flame) 60%,var(--pink)) }
+.bars{ display:flex; gap:2.2px; align-items:center; height:8mm }
+.bars i{ width:3px; border-radius:2px; background:var(--amber) }
+.cover .logo{ width:58mm; margin-top:30mm; filter:drop-shadow(0 25px 50px rgba(0,0,0,.55)) }
+.cover h1{ font-size:54pt; margin:8mm 0 0; letter-spacing:-.02em; font-weight:800; line-height:1 }
+.cover h1 span{ color:var(--amber) }
+.cover .sub{ font-size:15pt; color:var(--mute); margin-top:4mm }
+.cover .ver{ margin-top:9mm; display:inline-flex; gap:8px }
+.pill{ display:inline-flex; align-items:center; gap:5px; padding:3px 11px; border-radius:99px; font-size:8.5pt; font-weight:600;
+  background:var(--card2); border:1px solid var(--line); color:var(--ink) }
+.pill.a{ background:rgba(255,159,10,.16); border-color:rgba(255,159,10,.35); color:var(--gold) }
+.pill.c{ background:rgba(100,210,255,.12); border-color:rgba(100,210,255,.3); color:var(--cyan) }
+.pill.p{ background:rgba(255,55,95,.13); border-color:rgba(255,55,95,.3); color:#ff8fa6 }
+.pill.g{ background:rgba(48,209,88,.13); border-color:rgba(48,209,88,.3); color:#7ee69a }
+.cover .blurb{ margin-top:auto; margin-bottom:26mm; max-width:140mm; color:var(--mute); font-size:10.5pt }
+
+/* ── Tipografia de capítulo ─────────────────────────── */
+.chead{ display:flex; gap:7mm; align-items:flex-end; margin:3mm 0 4mm }
+.num{ font-size:62pt; font-weight:800; line-height:.8; letter-spacing:-.04em;
+  color:transparent; -webkit-text-stroke:1.6px var(--amber); opacity:.95 }
+.chead h2{ margin:0; font-size:23pt; line-height:1.1; letter-spacing:-.01em }
+.chead .lead{ color:var(--mute); margin-top:2mm; font-size:10.5pt }
+.meta{ display:flex; flex-wrap:wrap; gap:6px; margin-top:3mm }
+h3{ font-size:12pt; margin:5mm 0 2mm; color:#fff }
+p{ margin:0 0 2.2mm }
+.muted{ color:var(--mute) }
+
+.why{ border-radius:12px; padding:2.8mm 4.5mm; background:linear-gradient(90deg,rgba(100,210,255,.11),rgba(100,210,255,.03));
+  border:1px solid rgba(100,210,255,.22); margin-bottom:4mm }
+.why .t{ color:var(--cyan); font-weight:700; font-size:8.5pt; letter-spacing:.07em; text-transform:uppercase; margin-bottom:1mm }
+.tip,.warn{ border-radius:12px; padding:3mm 4.5mm; margin-top:3.5mm; display:flex; gap:3.5mm; align-items:flex-start }
+.tip{ background:rgba(255,159,10,.09); border:1px solid rgba(255,159,10,.28) }
+.warn{ background:rgba(255,55,95,.09); border:1px solid rgba(255,55,95,.28) }
+.tip .i,.warn .i{ font-size:13pt; line-height:1.2 }
+.tip .t{ color:var(--gold); font-weight:700 } .warn .t{ color:#ff8fa6; font-weight:700 }
+
+/* Passos */
+.steps{ display:flex; flex-direction:column; gap:2.6mm; counter-reset:st }
+.step{ display:grid; grid-template-columns:9mm 1fr; gap:3.5mm; padding:2.8mm 4mm; border-radius:14px;
+  background:var(--card); border:1px solid var(--line) }
+.step::before{ counter-increment:st; content:counter(st); width:8mm; height:8mm; border-radius:50%;
+  display:flex; align-items:center; justify-content:center; font-weight:800; font-size:11pt; color:#1a0d00;
+  background:linear-gradient(145deg,var(--gold),var(--amber) 55%,var(--flame)); box-shadow:0 4px 14px rgba(255,159,10,.35) }
+.step h4{ margin:.6mm 0 1.2mm; font-size:11pt; color:#fff }
+.step p:last-child{ margin-bottom:0 }
+.step .row{ display:flex; gap:5mm; align-items:center }
+.step .row > .txt{ flex:1 }
+.cols{ display:grid; grid-template-columns:1fr 1fr; gap:4mm }
+
+/* Figuras */
+.fig{ margin-top:2.5mm }
+.fig img.shot{ width:100%; display:block; border-radius:12px }
+.cap{ font-size:8pt; color:var(--dim); margin-top:1.4mm; text-align:center }
+
+/* Mockup: janela macOS */
+.win{ border-radius:11px; overflow:hidden; background:#1c2230; border:1px solid rgba(255,255,255,.12);
+  box-shadow:0 14px 34px rgba(0,0,0,.45); font-size:8.5pt; color:#e8ecf3; position:relative }
+.win .tb{ height:7mm; display:flex; align-items:center; gap:5px; padding:0 3mm; background:#262d3d; border-bottom:1px solid rgba(255,255,255,.06) }
+.win .tb i{ width:9px; height:9px; border-radius:50% } .win .tb i:nth-child(1){background:#FF5F57} .win .tb i:nth-child(2){background:#FEBC2E} .win .tb i:nth-child(3){background:#28C840}
+.win .tb span{ flex:1; text-align:center; font-weight:600; color:#c9d1df; margin-right:30px }
+.sys{ display:grid; grid-template-columns:34% 1fr; min-height:36mm }
+.sys .side{ background:#202737; padding:2.2mm; display:flex; flex-direction:column; gap:1px }
+.sys .side div{ padding:1.2mm 2mm; border-radius:6px; display:flex; gap:6px; align-items:center; color:#c3cbda }
+.sys .side div.sel{ background:var(--blue); color:#fff }
+.sys .side b.ic{ width:13px; height:13px; border-radius:4px; display:inline-block; background:#6b7690 }
+.sys .main{ padding:3mm 3.5mm }
+.sys .main .h{ font-weight:700; font-size:10pt; margin-bottom:1mm; display:flex; align-items:center; gap:6px }
+.sys .main .d{ color:#9aa5b8; font-size:7.5pt; margin-bottom:2mm }
+.sys .list{ background:#262e40; border-radius:8px; overflow:hidden }
+.sys .it{ display:flex; align-items:center; gap:7px; padding:1.6mm 2.5mm; border-bottom:1px solid rgba(255,255,255,.05) }
+.sys .it:last-child{ border-bottom:0 }
+.sys .it.hl{ background:rgba(255,159,10,.14); box-shadow:inset 0 0 0 1.5px var(--amber) }
+.sys .it .nm{ flex:1 }
+.sys .pm{ display:flex; gap:0; margin-top:1.5mm } .sys .pm b{ width:6mm; height:5mm; display:flex; align-items:center; justify-content:center; background:#2f3850; color:#cfd6e4; font-weight:600 }
+.sys .pm b:first-child{ border-radius:5px 0 0 5px } .sys .pm b:last-child{ border-radius:0 5px 5px 0; border-left:1px solid #1c2230 }
+.sys .pm b.hl{ box-shadow:inset 0 0 0 1.5px var(--amber); color:var(--gold) }
+.tg{ width:22px; height:13px; border-radius:7px; background:#4a5368; position:relative; flex:none }
+.tg::after{ content:""; position:absolute; top:1.5px; left:1.5px; width:10px; height:10px; border-radius:50%; background:#fff }
+.tg.on{ background:var(--green) } .tg.on::after{ left:10.5px }
+.aic{ width:15px; height:15px; border-radius:4px; flex:none; display:flex; align-items:center; justify-content:center; font-size:8px; font-weight:800; color:#fff }
+.aic img{ width:15px; height:15px }
+.cur{ position:absolute; width:16px; height:22px; z-index:3; filter:drop-shadow(0 2px 3px rgba(0,0,0,.6)) }
+
+/* Terminal */
+.term{ background:#05080f; border-radius:11px; border:1px solid rgba(255,255,255,.1); overflow:hidden; box-shadow:0 12px 30px rgba(0,0,0,.4) }
+.term .tb{ height:6.5mm; display:flex; align-items:center; gap:5px; padding:0 3mm; background:#131a28 }
+.term .tb i{ width:8px; height:8px; border-radius:50% } .term .tb i:nth-child(1){background:#FF5F57} .term .tb i:nth-child(2){background:#FEBC2E} .term .tb i:nth-child(3){background:#28C840}
+.term pre{ margin:0; padding:2.6mm 3.5mm; font-family:var(--mono); font-size:8.3pt; line-height:1.55; color:#d6deea; white-space:pre-wrap }
+.term .p{ color:var(--amber) } .term .c{ color:#5f6f8a } .term .o{ color:#7ee69a } .term .y{ color:var(--cyan) }
+
+/* Notch / barra de menus */
+.menubar{ height:9mm; background:linear-gradient(#26324a,#1d2639); border-radius:10px 10px 0 0; position:relative; display:flex; align-items:center;
+  padding:0 4mm; font-size:8pt; color:#c9d3e4; gap:4mm }
+.desk{ border-radius:10px; overflow:hidden; border:1px solid var(--line); background:linear-gradient(160deg,#1f3a63,#0c1a33) }
+.desk .area{ height:20mm; position:relative }
+.isl{ position:absolute; top:0; left:50%; transform:translateX(-50%); height:9mm; background:#000; border-radius:0 0 3.5mm 3.5mm;
+  display:flex; align-items:center; justify-content:space-between; padding:0 2.5mm; gap:3mm; box-shadow:0 6px 16px rgba(0,0,0,.5) }
+.bub{ position:absolute; top:.6mm; width:7.8mm; height:7.8mm; border-radius:50%; background:#000; display:flex; align-items:center; justify-content:center;
+  box-shadow:0 4px 10px rgba(0,0,0,.5); font-size:9pt }
+.badge{ position:absolute; top:-1.2mm; right:-1.2mm; min-width:4mm; height:4mm; padding:0 1mm; border-radius:2mm; background:var(--pink); color:#fff; font-size:6.5pt; font-weight:800; display:flex; align-items:center; justify-content:center }
+
+/* Navegador */
+.brow .url{ margin:1.5mm 3mm; height:5.5mm; border-radius:6px; background:#121826; display:flex; align-items:center; padding:0 3mm; color:#9fb0c9; font-family:var(--mono); font-size:7.5pt }
+.form{ padding:2mm 4mm 4mm }
+.form label{ display:block; color:#9aa5b8; font-size:7.5pt; margin:2mm 0 .8mm }
+.form .in{ height:6mm; border-radius:6px; background:#121826; border:1px solid rgba(255,255,255,.1); display:flex; align-items:center; padding:0 2.5mm; font-size:8pt }
+.form .in.hl{ border-color:var(--amber); box-shadow:0 0 0 2px rgba(255,159,10,.25) }
+.chk{ display:inline-flex; align-items:center; gap:5px; margin-right:4mm; font-size:8pt }
+.chk b{ width:10px; height:10px; border-radius:3px; border:1px solid #6c7a93; display:inline-block }
+.chk b.on{ background:var(--green); border-color:var(--green) }
+.btn{ display:inline-flex; align-items:center; gap:5px; padding:1.3mm 3.5mm; border-radius:99px; font-weight:700; font-size:8pt }
+.btn.green{ background:#1db954; color:#04120a } .btn.amber{ background:rgba(255,159,10,.2); color:var(--gold); border:1px solid rgba(255,159,10,.4) }
+.btn.blue{ background:var(--blue); color:#fff; border-radius:6px }
+
+/* Diálogo */
+.dlg{ width:66mm; margin:0 auto; border-radius:13px; background:#262d3d; border:1px solid rgba(255,255,255,.12); padding:4mm; text-align:center;
+  box-shadow:0 16px 40px rgba(0,0,0,.55); font-size:8pt; color:#dfe5ee }
+.dlg img{ width:12mm } .dlg b{ display:block; margin:1.5mm 0 1mm; font-size:9pt }
+.dlg .bt{ margin-top:2.5mm; display:flex; flex-direction:column; gap:1.3mm }
+.dlg .bt span{ border-radius:7px; padding:1.2mm; background:#3a4358 } .dlg .bt span.pri{ background:var(--blue); color:#fff }
+
+/* Fluxo */
+.flow{ display:flex; align-items:center; gap:2mm; margin:2mm 0 }
+.flow .n{ flex:1; border-radius:11px; padding:2.6mm 2mm; text-align:center; background:var(--card2); border:1px solid var(--line); font-size:8.3pt }
+.flow .n .e{ font-size:15pt; display:block; margin-bottom:.6mm }
+.flow .n small{ display:block; color:var(--dim); font-family:var(--mono); font-size:7pt; margin-top:.6mm }
+.flow .ar{ color:var(--amber); font-size:14pt; font-weight:800 }
+
+/* Tabelas */
+table{ width:100%; border-collapse:separate; border-spacing:0; font-size:9pt; border-radius:12px; overflow:hidden; border:1px solid var(--line) }
+th{ text-align:left; background:rgba(255,159,10,.12); color:var(--gold); font-weight:700; padding:2mm 3mm; font-size:8pt; letter-spacing:.04em; text-transform:uppercase }
+td{ padding:1.5mm 3mm; border-top:1px solid var(--line); vertical-align:top; background:var(--card) }
+td:first-child{ font-weight:600; color:#fff; white-space:nowrap }
+
+/* Sumário */
+.toc{ display:grid; grid-template-columns:1fr 1fr; gap:2.6mm 4mm; margin-top:3mm }
+.toc a{ display:flex; gap:3.5mm; align-items:center; padding:2.8mm 3.5mm; border-radius:12px; background:var(--card); border:1px solid var(--line); color:var(--ink); text-decoration:none }
+.toc a .k{ font-size:17pt; font-weight:800; color:transparent; -webkit-text-stroke:1.1px var(--amber); width:11mm }
+.toc a .t{ font-weight:650 } .toc a .s{ display:block; color:var(--dim); font-size:8pt; font-weight:400 }
+.grid2{ display:grid; grid-template-columns:1fr 1fr; gap:4mm }
+.box{ border-radius:14px; padding:3.5mm 4.5mm; background:var(--card); border:1px solid var(--line) }
+.box h4{ margin:0 0 2mm; font-size:10pt }
+.box ul{ margin:0; padding-left:4.5mm } .box li{ margin:.6mm 0 }
+.dot{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; vertical-align:middle }
+</style>
+</head>
+<body>
+<script>
+// ── Helpers de desenho ───────────────────────────────────────────────────
+const w = s => document.write(s);
+const ICON = 'img/icon.png';
+const WAVES = `<svg class="waves" viewBox="0 0 800 80" preserveAspectRatio="none">
+  ${[0,1,2].map(i=>`<path d="M0 ${30+i*16} Q 50 ${18+i*16} 100 ${30+i*16} T 200 ${30+i*16} T 300 ${30+i*16} T 400 ${30+i*16} T 500 ${30+i*16} T 600 ${30+i*16} T 700 ${30+i*16} T 800 ${30+i*16}" fill="none" stroke="#64D2FF" stroke-opacity="${.32-i*.08}" stroke-width="2"/>`).join('')}
+</svg>`;
+const CURSOR = (x,y) => `<svg class="cur" style="left:${x};top:${y}" viewBox="0 0 16 22"><path d="M1 1 L1 17 L5 13 L8 20 L11 19 L8 12 L14 12 Z" fill="#fff" stroke="#000" stroke-width="1.2" stroke-linejoin="round"/></svg>`;
+const harborIc = `<span class="aic"><img src="${ICON}"></span>`;
+const appIc = (bg, t) => `<span class="aic" style="background:${bg}">${t}</span>`;
+const tg = on => `<span class="tg ${on?'on':''}"></span>`;
+const bars = (n=5,c='var(--amber)') => `<span class="bars">${Array.from({length:n},(_,i)=>`<i style="height:${[9,15,11,17,7,13][i%6]}px;background:${c}"></i>`).join('')}</span>`;
+
+/** Janela de Ajustes do Sistema › Privacidade e Segurança › <pane> */
+function sys(pane, desc, rows, opts={}){
+  const side = ['Geral','Aparência','Acessibilidade','Central de Controle','Privacidade e Segurança','Notificações']
+    .map(s=>`<div class="${s===(opts.side||'Privacidade e Segurança')?'sel':''}"><b class="ic"></b>${s}</div>`).join('');
+  const list = rows.map(r=>`<div class="it ${r.hl?'hl':''}">${r.ic||harborIc}<span class="nm">${r.n}</span>${r.tg===undefined?'':tg(r.tg)}</div>`).join('');
+  return `<div class="win"><div class="tb"><i></i><i></i><i></i><span>Ajustes do Sistema</span></div>
+    <div class="sys"><div class="side">${side}</div><div class="main">
+      <div class="h">‹ &nbsp;${pane}</div><div class="d">${desc}</div>
+      <div class="list">${list}</div>${opts.pm?`<div class="pm"><b class="${opts.pm==='+'?'hl':''}">+</b><b class="${opts.pm==='-'?'hl':''}">−</b></div>`:''}
+    </div></div>${opts.cursor||''}</div>`;
+}
+const term = lines => `<div class="term"><div class="tb"><i></i><i></i><i></i></div><pre>${lines}</pre></div>`;
+const runhead = ch => `<div class="run"><img src="${ICON}"><span>Manual do Harbor</span><span class="sp"></span><span class="ch">${ch}</span></div>`;
+</script>
+
+<!-- ═══════════════════════════ CAPA ═══════════════════════════ -->
+<section class="page cover" data-part="intro">
+  <div class="island"><span class="art"></span><script>w(bars(6))</script></div>
+  <img class="logo" src="img/icon.png">
+  <h1>Harbor<span>.</span></h1>
+  <div class="sub">Manual de configuração</div>
+  <div class="ver"><span class="pill a">Versão 2.1</span><span class="pill">macOS 14 ou mais novo</span><span class="pill c">pt-BR</span></div>
+  <div class="blurb">Quase tudo no Harbor funciona assim que você abre o app. Este manual cobre as partes que precisam de uma
+    permissão do macOS, de uma conta ou de um pequeno ajuste para funcionar, com o passo a passo de cada uma.</div>
+  <script>w(WAVES)</script>
+</section>
+
+<!-- ═══════════════════════════ SUMÁRIO ═══════════════════════════ -->
+<section class="page" data-part="intro">
+  <script>w(runhead('Sumário'))</script>
+  <div class="chead"><div><h2>Antes de começar</h2><div class="lead">O que já funciona sozinho e o que pede um minuto de atenção.</div></div></div>
+
+  <div class="grid2">
+    <div class="box"><h4><span class="dot" style="background:var(--green)"></span>Funciona sem configurar</h4>
+      <ul class="muted"><li>Música do Spotify e do Música (pede só a Automação)</li><li>CPU, bateria, timer Foco/Pausa e tarefas</li>
+      <li>Bandeja de arquivos e AirDrop</li><li>Histórico de cópias (<kbd>⌥</kbd> <kbd>V</kbd>)</li><li>Odômetro, nota rápida, conta-gotas e rede</li><li>Mudo do microfone (<kbd>⌥</kbd> <kbd>M</kbd>)</li></ul></div>
+    <div class="box"><h4><span class="dot" style="background:var(--amber)"></span>Pede atenção</h4>
+      <ul class="muted"><li>Abrir um app não notarizado pela Apple</li><li>Permissões do macOS</li><li>Contas: GitHub e Spotify</li>
+      <li>Integrações: Claude Code e Modo Foco</li><li>Recursos que dependem de outra permissão</li></ul></div>
+  </div>
+
+  <h3 style="margin-top:7mm">Capítulos</h3>
+  <div class="toc">
+    <a href="#instalacao"><span class="k">01</span><span class="t">Instalação e primeira abertura<span class="s">DMG, Gatekeeper, iniciar com o macOS</span></span></a>
+    <a href="#permissoes"><span class="k">02</span><span class="t">Permissões do macOS<span class="s">Para que serve cada uma e como corrigir</span></span></a>
+    <a href="#hud"><span class="k">03</span><span class="t">Aviso de volume e brilho<span class="s">Substituir o aviso nativo do macOS</span></span></a>
+    <a href="#vidro"><span class="k">04</span><span class="t">Liquid Glass e visualizador real<span class="s">Gravação de Tela e reinício</span></span></a>
+    <a href="#claude"><span class="k">05</span><span class="t">Claude Code no notch<span class="s">Hooks: trabalhando, pronto, permissão</span></span></a>
+    <a href="#github"><span class="k">06</span><span class="t">PRs e CI do GitHub<span class="s">GitHub CLI, login e organizações</span></span></a>
+    <a href="#spotify"><span class="k">07</span><span class="t">Spotify: fila e curtir<span class="s">App de desenvolvedor e Client ID</span></span></a>
+    <a href="#foco"><span class="k">08</span><span class="t">Timer → Modo Foco<span class="s">Dois atalhos no app Atalhos</span></span></a>
+    <a href="#pins"><span class="k">09</span><span class="t">Apps fixados e badges<span class="s">Bolhas ao lado do notch</span></span></a>
+    <a href="#agenda"><span class="k">10</span><span class="t">Reuniões e downloads<span class="s">Calendários e pasta Downloads</span></span></a>
+    <a href="#problemas"><span class="k">11</span><span class="t">Solução de problemas<span class="s">E a referência de atalhos</span></span></a>
+  </div>
+
+  <div class="tip"><span class="i">💡</span><div><span class="t">Os Ajustes do Harbor ficam dentro do próprio notch.</span>
+    Passe o mouse no topo da tela (ou aperte <kbd>⌥</kbd> <kbd>Espaço</kbd>) e clique em <span class="ui">✦ Ajustes</span>, a última aba.
+    Ao longo do manual, um caminho como <span class="path">Ajustes<i>›</i>Integrações</span> indica onde clicar.</div></div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<!-- ═══════════════════════════ 01 INSTALAÇÃO ═══════════════════════════ -->
+<section class="page" id="instalacao" data-part="instalacao">
+  <script>w(runhead('01 · Instalação'))</script>
+  <div class="chead"><div class="num">01</div><div><h2>Instalação e primeira abertura</h2>
+    <div class="meta"><span class="pill">⏱ 2 min</span><span class="pill a">Uma vez por Mac</span></div></div></div>
+  <div class="why"><div class="t">Por que precisa de atenção</div>O Harbor é assinado, mas não é <b>notarizado pela Apple</b>, porque a notarização exige a conta paga de desenvolvedor.
+    Por isso, na primeira abertura o macOS bloqueia o app. É só liberar uma vez.</div>
+
+  <div class="steps">
+    <div class="step"><div><h4>Baixe o instalador</h4>
+      <p>Na página de <b>Releases</b> do repositório, baixe o arquivo <code>Harbor-2.1.0.dmg</code>. Se preferir, o <code>.zip</code> também serve.</p></div></div>
+
+    <div class="step"><div><div class="row"><div class="txt"><h4>Arraste para Aplicativos</h4>
+      <p>Abra o <code>.dmg</code> e arraste o ícone do Harbor até a pasta <b>Aplicativos</b>.</p></div>
+      <svg width="190" height="78" viewBox="0 0 190 78">
+        <rect x="1" y="1" width="188" height="76" rx="12" fill="#1c2230" stroke="rgba(255,255,255,.12)"/>
+        <image href="img/icon.png" x="18" y="12" width="46" height="46"/>
+        <text x="41" y="70" fill="#cfd6e4" font-size="8" text-anchor="middle" style="font-family:-apple-system,Helvetica,sans-serif">Harbor</text>
+        <path d="M74 36 H112" stroke="#FF9F0A" stroke-width="3" stroke-dasharray="5 4" stroke-linecap="round"/><path d="M110 28 L120 36 L110 44" fill="none" stroke="#FF9F0A" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+        <path d="M130 18 h14 l5 5 h22 a4 4 0 0 1 4 4 v27 a4 4 0 0 1 -4 4 h-41 a4 4 0 0 1 -4 -4 v-32 a4 4 0 0 1 4 -4z" fill="#3b8ff0"/>
+        <path d="M126 28 h49 v26 a4 4 0 0 1 -4 4 h-41 a4 4 0 0 1 -4 -4z" fill="#62a8ff"/>
+        <text x="151" y="47" fill="#fff" font-size="13" text-anchor="middle" style="font-family:-apple-system,Helvetica,sans-serif" font-weight="700">A</text>
+        <text x="151" y="70" fill="#cfd6e4" font-size="8" text-anchor="middle" style="font-family:-apple-system,Helvetica,sans-serif">Aplicativos</text>
+      </svg></div></div></div>
+
+    <div class="step"><div><h4>Libere a primeira abertura</h4>
+      <div class="row" style="align-items:flex-start">
+        <div class="txt"><p>Se aparecer o aviso ao lado, clique em <b>Concluído</b> e use um destes caminhos:</p>
+          <p><b>A.</b> No Finder, clique com o <b>botão direito</b> no Harbor e escolha <span class="ui">Abrir</span>. Depois, confirme em <span class="ui">Abrir</span>.</p>
+          <p><b>B.</b> Vá em <span class="path">Ajustes do Sistema<i>›</i>Privacidade e Segurança</span>, desça até o fim e clique em <span class="ui">Abrir Mesmo Assim</span>.</p>
+          <p><b>C.</b> Rode este comando no Terminal:</p>
+          <script>w(term(`<span class="p">$</span> xattr -dr com.apple.quarantine /Applications/Harbor.app`))</script></div>
+        <div class="dlg" style="flex:none"><img src="img/icon.png"><b>“Harbor” não pode ser aberto</b>
+          A Apple não pôde verificar se “Harbor” está livre de malware.<div class="bt"><span class="pri">Concluído</span><span>Mover para o Lixo</span></div></div>
+      </div></div></div>
+
+    <div class="step"><div><div class="row"><div class="txt"><h4>Ache o Harbor e ligue a inicialização automática</h4>
+      <p>O Harbor não aparece no Dock. Ele vive no <b>notch</b> e num ícone na barra de menus (um retângulo com o topo preenchido), com <span class="ui">Abrir Harbor</span>, <span class="ui">Ajustes…</span>, <span class="ui">Enviar feedback…</span> e <span class="ui">Sair do Harbor</span>.
+      Em <span class="path">Ajustes<i>›</i>Geral</span>, ative <span class="ui">Iniciar com o macOS</span>.</p></div>
+      <div class="win" style="width:62mm;flex:none"><div style="padding:2.5mm 3.5mm;background:#000;font-size:8pt">
+        <div style="color:var(--amber);font-weight:700;margin-bottom:1.5mm">Comportamento</div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.8mm 0">Iniciar com o macOS <span class="tg on"></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.8mm 0;color:#9aa5b8">Feedback háptico ao abrir <span class="tg"></span></div>
+        <div style="display:flex;justify-content:space-between;align-items:center;padding:.8mm 0;color:#9aa5b8">Visualizador no notch fechado <span class="tg on"></span></div></div></div>
+      </div></div></div>
+  </div>
+  <div class="tip"><span class="i">🔄</span><div><span class="t">Atualizações:</span> para atualizar, substitua o app em Aplicativos pela versão nova. As permissões continuam valendo, porque todas as versões têm a mesma assinatura.</div></div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<!-- ═══════════════════════════ 02 PERMISSÕES ═══════════════════════════ -->
+<section class="page" id="permissoes" data-part="permissoes">
+  <script>w(runhead('02 · Permissões'))</script>
+  <div class="chead"><div class="num">02</div><div><h2>Permissões do macOS</h2>
+    <div class="meta"><span class="pill">⏱ 3 min</span><span class="pill c">Todas opcionais, exceto a Automação para a música</span></div></div></div>
+  <div class="why"><div class="t">Por que precisa de atenção</div>O macOS só deixa um app ler a tela, o teclado ou a agenda depois que <b>você autoriza</b>. O Harbor pede cada permissão
+    apenas quando você ativa o recurso que depende dela. Elas ficam em <span class="path">Ajustes do Sistema<i>›</i>Privacidade e Segurança</span>.</div>
+
+  <table>
+    <tr><th>Permissão</th><th>Para quê</th><th>Cap.</th></tr>
+    <tr><td>🎵 Automação</td><td>Ler e controlar o Spotify e o Música</td><td>—</td></tr>
+    <tr><td>♿️ Acessibilidade</td><td>Colar ao clicar numa cópia, substituir o aviso de volume e brilho e mostrar os badges do Dock</td><td>03 · 09</td></tr>
+    <tr><td>🖥️ Gravação de Tela</td><td>Liquid Glass com refração e visualizador com o áudio real</td><td>04</td></tr>
+    <tr><td>📅 Calendários</td><td>Agenda e contagem para reuniões</td><td>10</td></tr>
+    <tr><td>📷 Câmera</td><td>Aba Espelho</td><td>—</td></tr>
+    <tr><td>🎧 Bluetooth</td><td>Avisos de fones conectados</td><td>—</td></tr>
+    <tr><td>📁 Pasta Downloads</td><td>Downloads ao vivo</td><td>10</td></tr>
+  </table>
+
+  <h3>Como conceder</h3>
+  <div class="cols">
+    <div class="steps">
+      <div class="step"><div><h4>Pelo botão do Harbor</h4><p>Botões como <span class="ui">Permitir Acessibilidade</span> abrem o painel certo dos Ajustes do Sistema.</p></div></div>
+      <div class="step"><div><h4>Ative o Harbor na lista</h4><p>Ligue a chave ao lado do Harbor. O macOS pode pedir sua senha ou o Touch ID.</p></div></div>
+      <div class="step"><div><h4>Se não aparecer na lista</h4><p>Clique em <b>+</b>, escolha <code>/Applications/Harbor.app</code> e ligue a chave.</p></div></div>
+    </div>
+    <div><script>w(sys('Acessibilidade','Permita que os apps abaixo controlem seu computador.',[
+        {n:'Harbor',tg:true,hl:true},{n:'Terminal',ic:appIc('#2b2b2b','&gt;_'),tg:true},{n:'Raycast',ic:appIc('#ff6363','R'),tg:false}],
+        {pm:'+',cursor:CURSOR('86%','62%')}))</script><div class="cap">Ajustes do Sistema › Privacidade e Segurança › Acessibilidade</div></div>
+  </div>
+
+  <div class="warn"><span class="i">🛠️</span><div><span class="t">“Dei a permissão, mas não funciona”:</span> selecione o Harbor na lista, clique em <b>−</b> para removê-lo, adicione de novo com <b>+</b> e reabra o app.
+    Isso acontece quando o macOS guardou a permissão para uma versão antiga ou com outra assinatura.</div></div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<!-- ═══════════════════════════ 03 HUD ═══════════════════════════ -->
+<section class="page" id="hud" data-part="hud">
+  <script>w(runhead('03 · Volume e brilho'))</script>
+  <div class="chead"><div class="num">03</div><div><h2>Aviso de volume e brilho</h2>
+    <div class="lead">Volume e brilho aparecem no notch, sem o quadrado do macOS no meio da tela.</div>
+    <div class="meta"><span class="pill">⏱ 1 min</span><span class="pill p">Requer Acessibilidade</span></div></div></div>
+  <div class="why"><div class="t">Por que precisa de atenção</div>Para impedir o aviso nativo, o Harbor precisa <b>interceptar as teclas de volume e brilho</b> antes do macOS.
+    Sem a Acessibilidade, ele só consegue mostrar o aviso no notch ao lado do nativo, que continua aparecendo.</div>
+
+  <div class="desk" style="margin-bottom:4mm"><div class="menubar"><b style="color:#fff"></b><span>Finder</span><span>Arquivo</span><span>Editar</span></div>
+    <div class="area" style="height:24mm">
+      <div class="isl" style="width:62mm;padding:0 3mm"><span style="font-size:10pt">🔊</span>
+        <span style="flex:1;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--amber) 64%,#333 64%)"></span><span style="font-size:8pt;font-weight:700">64%</span></div>
+      <div style="position:absolute;right:8mm;top:7mm;width:22mm;height:16mm;border-radius:10px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:15pt;opacity:.55">🔊
+        <svg style="position:absolute;inset:0" viewBox="0 0 100 70"><path d="M8 8 L92 62 M92 8 L8 62" stroke="#FF375F" stroke-width="6" stroke-linecap="round"/></svg></div>
+      <div style="position:absolute;right:6mm;bottom:-1mm;font-size:7pt;color:var(--mute)">aviso nativo: oculto</div>
+    </div></div>
+
+  <div class="steps">
+    <div class="step"><div><h4>Ative a substituição</h4><p>Em <span class="path">Ajustes<i>›</i>Integrações<i>›</i>Aviso do macOS</span>, ligue <span class="ui">Substituir pelo do Harbor</span>.</p></div></div>
+    <div class="step"><div><div class="row"><div class="txt"><h4>Permita a Acessibilidade</h4><p>Clique em <span class="ui">Permitir Acessibilidade</span> e ligue a chave do Harbor no painel que abrir.
+      Quando der certo, aparece <span style="color:#7ee69a;font-weight:700">✓ Ativo</span> em vez do botão.</p></div>
+      <div class="win" style="width:66mm;flex:none"><div style="padding:3mm 3.5mm;background:#000;font-size:8pt">
+        <div style="color:var(--amber);font-weight:700;margin-bottom:1.5mm">Aviso do macOS</div>
+        <div style="display:flex;justify-content:space-between;align-items:center">Substituir pelo do Harbor <span class="tg on"></span></div>
+        <div style="color:#8b96a8;font-size:7pt;margin:1mm 0 2mm">Volume e brilho aparecem só no notch, sem o aviso nativo.</div>
+        <span class="btn amber">Permitir Acessibilidade</span></div></div></div></div></div>
+    <div class="step"><div><h4>Teste</h4><p>Aperte <kbd>F11</kbd> e <kbd>F12</kbd> (volume) ou <kbd>F1</kbd> e <kbd>F2</kbd> (brilho). Se o aviso nativo ainda aparecer, <b>feche e abra o Harbor</b> pelo ícone da barra de menus.</p></div></div>
+  </div>
+  <div class="tip"><span class="i">🎛️</span><div><span class="t">Escolha quais avisos aparecem</span> em <span class="path">Ajustes<i>›</i>Geral<i>›</i>Avisos no notch</span>: Volume, Brilho, Bateria e carregador, e Fones Bluetooth.</div></div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<!-- ═══════════════════════════ 04 VIDRO ═══════════════════════════ -->
+<section class="page" id="vidro" data-part="vidro">
+  <script>w(runhead('04 · Liquid Glass'))</script>
+  <div class="chead"><div class="num">04</div><div><h2>Liquid Glass e visualizador real</h2>
+    <div class="meta"><span class="pill">⏱ 2 min</span><span class="pill p">Requer Gravação de Tela</span><span class="pill a">Reabrir o app</span></div></div></div>
+  <div class="why"><div class="t">Por que precisa de atenção</div>O motor <b>Refração</b> distorce o que está atrás do island, então ele precisa “ver” a tela. O <b>visualizador real</b> analisa o áudio do sistema.
+    No macOS, as duas coisas dependem da permissão de <b>Gravação de Tela e Áudio do Sistema</b>. O Harbor não grava nem envia nada: tudo é processado na hora, na memória.</div>
+
+  <div class="cols" style="align-items:start">
+    <div class="steps">
+      <div class="step"><div><h4>Escolha o Liquid Glass</h4><p>Em <span class="path">Ajustes<i>›</i>Visual<i>›</i>Aparência</span>, escolha <span class="ui">Liquid Glass</span> e o motor <span class="ui">Refração</span>.</p></div></div>
+      <div class="step"><div><h4>Permita a Gravação de Tela</h4><p>Clique em <span class="ui">Permitir Gravação de Tela</span> e ligue o Harbor no painel do macOS.</p></div></div>
+      <div class="step"><div><h4>Reabra o Harbor</h4><p>O macOS só libera a captura para o app depois que ele é reaberto. Use <span class="ui">Sair do Harbor</span>, no ícone da barra de menus, e abra de novo.</p></div></div>
+      <div class="step"><div><h4>Visualizador real</h4><p>Em <span class="path">Ajustes<i>›</i>Visual<i>›</i>Tema do visualizador</span>, escolha <span class="ui">Real</span> e ajuste a intensidade, de <i>Suave</i> a <i>Insano</i>.</p></div></div>
+    </div>
+    <div>
+      <script>w(sys('Gravação de Tela e Áudio do Sistema','Permita que os apps abaixo gravem o conteúdo da tela e o áudio.',[
+        {n:'Harbor',tg:true,hl:true},{n:'Zoom',ic:appIc('#2D8CFF','Z'),tg:true},{n:'Google Chrome',ic:appIc('#ea4335','G'),tg:false}],
+        {cursor:CURSOR('88%','52%')}))</script>
+      <div class="cap">Ajustes do Sistema › Privacidade e Segurança › Gravação de Tela e Áudio do Sistema</div>
+
+      <div style="margin-top:5mm;border-radius:14px;overflow:hidden;position:relative;height:30mm;background:
+        repeating-linear-gradient(45deg,#ff9f0a 0 10px,#ff375f 10px 20px,#64d2ff 20px 30px,#183a66 30px 40px)">
+        <div style="position:absolute;left:50%;top:0;transform:translateX(-50%);width:70%;height:20mm;border-radius:0 0 7mm 7mm;
+          backdrop-filter:blur(7px) saturate(1.9);-webkit-backdrop-filter:blur(7px) saturate(1.9);background:rgba(10,16,30,.25);
+          border:1.5px solid rgba(255,255,255,.55);border-top:0;box-shadow:inset 0 -6px 14px rgba(255,255,255,.25),0 10px 24px rgba(0,0,0,.4);
+          display:flex;align-items:center;justify-content:center;gap:3mm;font-weight:700"><script>w(bars(6,'#fff'))</script> Liquid Glass</div>
+      </div><div class="cap">Com a Refração, o fundo “dobra” nas bordas do island</div>
+    </div>
+  </div>
+  <div class="tip"><span class="i">🪟</span><div><span class="t">Sem permissão?</span> Os motores <span class="ui">AppKit</span> e <span class="ui">SwiftUI</span> usam o vidro do próprio sistema e não pedem nada. E o tema <span class="ui">Simulado</span> do visualizador funciona sem permissão.</div></div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<!-- ═══════════════════════════ 05 CLAUDE ═══════════════════════════ -->
+<section class="page" id="claude" data-part="claude">
+  <script>w(runhead('05 · Claude Code'))</script>
+  <div class="chead"><div class="num">05</div><div><h2>Claude Code no notch</h2>
+    <div class="lead">Veja quando o Claude está trabalhando, quando terminou e quando pede sua permissão.</div>
+    <div class="meta"><span class="pill">⏱ 1 min</span><span class="pill a">Altera ~/.claude/settings.json (com backup)</span></div></div></div>
+  <div class="why"><div class="t">Por que precisa de atenção</div>O Claude Code avisa o que está fazendo por meio de <b>hooks</b>: comandos que ele roda em cada evento. O Harbor instala um hook pequeno
+    que só repassa o evento para o app. Como isso mexe na configuração do Claude Code, a instalação é feita com um clique seu.</div>
+
+  <div class="flow">
+    <div class="n"><span class="e">✳️</span><b>Claude Code</b><small>evento</small></div><span class="ar">→</span>
+    <div class="n"><span class="e">📜</span><b>Hook</b><small>~/.harbor/claude-hook.sh</small></div><span class="ar">→</span>
+    <div class="n"><span class="e">🔗</span><b>URL</b><small>harbor://claude?d=…</small></div><span class="ar">→</span>
+    <div class="n"><span class="e">⚓</span><b>Notch</b><small>atividade ou aviso</small></div>
+  </div>
+
+  <div class="steps" style="margin-top:4mm">
+    <div class="step"><div><h4>Instale os hooks</h4><p>Em <span class="path">Ajustes<i>›</i>Integrações<i>›</i>Claude Code no notch</span>, clique em <span class="ui">Instalar hooks</span>.
+      O Harbor faz uma cópia de segurança em <code>~/.claude/settings.json.harbor-backup</code> e preserva os hooks que você já tinha.</p></div></div>
+    <div class="step"><div><h4>Reinicie as sessões</h4><p>As sessões do Claude Code que já estavam abertas não leem a configuração nova. Feche e abra as sessões para que elas passem a avisar o Harbor.</p></div></div>
+    <div class="step"><div><h4>Use normalmente</h4>
+      <div class="desk" style="margin-top:1.5mm"><div class="area" style="height:12mm">
+        <div class="isl" style="width:64mm;left:27%"><span style="color:var(--amber);font-size:12pt">✳</span><span style="font-size:7.5pt;color:#ccc">harbor</span><b style="font-size:8pt;color:var(--amber)">2:14</b></div>
+        <div class="isl" style="width:64mm;left:73%"><span style="font-size:10pt">✋</span><span style="font-size:7.5pt">Claude pede permissão</span><span></span></div>
+      </div></div>
+      <p style="margin-top:2mm"><b style="color:var(--amber)">Trabalhando:</b> asterisco girando e o tempo decorrido. &nbsp;<b style="color:#7ee69a">Pronto:</b> aviso rápido quando termina.
+      &nbsp;<b style="color:#ff8fa6">Permissão:</b> aviso que fica na tela até você responder no terminal.</p></div></div>
+  </div>
+  <div class="tip"><span class="i">↩️</span><div><span class="t">Para desfazer,</span> clique em <span class="ui">Remover hooks</span> no mesmo lugar. Só os hooks do Harbor saem, e o resto da sua configuração fica como estava.</div></div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<!-- ═══════════════════════════ 06 GITHUB ═══════════════════════════ -->
+<section class="page" id="github" data-part="github">
+  <script>w(runhead('06 · GitHub'))</script>
+  <div class="chead"><div class="num">06</div><div><h2>PRs e CI do GitHub</h2>
+    <div class="meta"><span class="pill">⏱ 3 min</span><span class="pill a">Requer o GitHub CLI</span><span class="pill c">Não precisa de pasta</span></div></div></div>
+  <div class="why"><div class="t">Por que precisa de atenção</div>A aba PRs consulta a <b>sua conta no GitHub</b> usando o <code>gh</code>, o GitHub CLI. Ela não depende de pastas no seu Mac.
+    A cada 90 s, aparecem os seus <b>25 PRs abertos mais recentes</b>, de qualquer repositório, e <b>até 15 PRs</b> que aguardam sua revisão.</div>
+
+  <div class="steps">
+    <div class="step"><div><h4>Instale e entre no GitHub CLI</h4>
+      <script>w(term(`<span class="c"># instala (Homebrew)</span>
+<span class="p">$</span> brew install gh
+<span class="c"># entra na sua conta: escolha GitHub.com › HTTPS › Login with a web browser</span>
+<span class="p">$</span> gh auth login
+<span class="c"># confere</span>
+<span class="p">$</span> gh auth status
+<span class="o">✓ Logged in to github.com account <span class="y">seu-usuario</span></span>`))</script></div></div>
+    <div class="step"><div><h4>Organizações com SSO</h4><p>Se a sua empresa usa SAML/SSO, autorize o GitHub CLI para ela: em <span class="path">github.com<i>›</i>Settings<i>›</i>Applications<i>›</i>Authorized OAuth Apps<i>›</i>GitHub CLI</span>,
+      clique em <span class="ui">Grant</span> ao lado da organização. Sem isso, os PRs dela não aparecem.</p></div></div>
+    <div class="step"><div><h4>Abra a aba PRs</h4><p>Em cada PR, o círculo mostra o status: <b style="color:#7ee69a">✓</b> checks passaram, <b style="color:#ff8fa6">✗</b> falharam, <b style="color:var(--gold)">◌</b> rodando.
+      Com <span class="ui">Avisos</span> ligado, o notch avisa quando um CI falha, quando um PR é aprovado ou quando alguém pede sua revisão.</p>
+      <div class="fig"><img class="shot" src="img/prs.png"></div></div></div>
+  </div>
+  <div class="tip"><span class="i">⟳</span><div><span class="t">Não quer esperar 90 s?</span> Clique no botão de atualizar no canto da aba. Se aparecer um erro, rode <code>gh auth status</code> no Terminal.</div></div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<!-- ═══════════════════════════ 07 SPOTIFY ═══════════════════════════ -->
+<section class="page" id="spotify" data-part="spotify">
+  <script>w(runhead('07 · Spotify'))</script>
+  <div class="chead"><div class="num">07</div><div><h2>Spotify: fila e curtir</h2>
+    <div class="meta"><span class="pill">⏱ 3 min</span><span class="pill g">Conta Spotify</span><span class="pill a">Uma vez</span></div></div></div>
+  <div class="why"><div class="t">Por que precisa de atenção</div>Tocar, pausar e mostrar a capa funcionam sem cadastro. Já a <b>fila</b> e o <b>❤️ curtir</b> só existem na Web API do Spotify,
+    que exige um <b>app de desenvolvedor</b>. Ele é gratuito e você só cria uma vez. O login usa OAuth PKCE e o token fica no seu Keychain.</div>
+
+  <div class="steps">
+    <div class="step"><div><div class="row" style="align-items:flex-start"><div class="txt"><h4>Crie o app no Spotify</h4>
+      <p>Entre em <code>developer.spotify.com/dashboard</code> e clique em <span class="ui">Create app</span>. Preencha:</p>
+      <p><b>App name:</b> Harbor<br><b>Redirect URI:</b> <code>http://127.0.0.1:47878/callback</code><br><b>Which API/SDKs:</b> marque <b>Web API</b></p>
+      <p>Aceite os termos e salve.</p></div>
+      <div class="win brow" style="width:76mm;flex:none"><div class="tb"><i></i><i></i><i></i><span></span></div>
+        <div class="url">🔒 developer.spotify.com/dashboard/create</div>
+        <div class="form"><div style="font-weight:700;font-size:10pt">Create app</div>
+          <label>App name</label><div class="in">Harbor</div>
+          <label>Redirect URIs</label><div class="in hl" style="font-family:var(--mono);font-size:7.3pt">http://127.0.0.1:47878/callback</div>
+          <label>Which API/SDKs are you planning to use?</label>
+          <span class="chk"><b class="on"></b>Web API</span><span class="chk"><b></b>Web Playback SDK</span>
+          <div style="margin-top:2.5mm"><span class="btn green">Save</span></div></div></div></div></div></div>
+    <div class="step"><div><h4>Copie o Client ID</h4><p>Na página do app, abra <span class="ui">Settings</span> e copie o <b>Client ID</b>. O <i>Client secret</i> não é necessário.</p></div></div>
+    <div class="step"><div><h4>Conecte no Harbor</h4><p>Na aba <span class="ui">▶ Mídia</span>, cole o Client ID e clique em <span class="ui">Conectar</span>. O navegador abre para você autorizar; depois disso, a fila aparece à direita do player.</p>
+      <div class="fig" style="width:62%;margin-left:auto;margin-right:auto"><img class="shot" src="img/spotify-connect.png"></div></div></div>
+  </div>
+  <div class="tip"><span class="i">👥</span><div><span class="t">Mais de uma conta?</span> Enquanto o app estiver em <i>Development mode</i>, só funciona para você. Para liberar outras contas, adicione o e-mail delas em <span class="ui">User Management</span> no painel da Spotify.</div></div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<!-- ═══════════════════════════ 08 FOCO ═══════════════════════════ -->
+<section class="page" id="foco" data-part="foco">
+  <script>w(runhead('08 · Modo Foco'))</script>
+  <div class="chead"><div class="num">08</div><div><h2>Timer → Modo Foco</h2>
+    <div class="lead">Ao iniciar o timer de foco, o Harbor liga o “Não Perturbe”. Ao terminar, desliga.</div>
+    <div class="meta"><span class="pill">⏱ 3 min</span><span class="pill a">App Atalhos</span></div></div></div>
+  <div class="why"><div class="t">Por que precisa de atenção</div>A Apple não deixa outros apps ligarem o Modo Foco diretamente. O caminho oficial é o app <b>Atalhos</b>:
+    você cria dois atalhos e o Harbor roda cada um no momento certo.</div>
+
+  <div class="steps">
+    <div class="step"><div><div class="row" style="align-items:flex-start"><div class="txt"><h4>Crie o atalho que liga</h4>
+      <p>Abra o app <b>Atalhos</b>, clique em <b>+</b>, procure a ação <span class="ui">Definir Foco</span> e configure <i>Ativar Não Perturbe Até Desativar</i>.
+      Dê ao atalho o nome <b>Ativar Foco</b>.</p></div>
+      <div class="win" style="width:70mm;flex:none"><div class="tb"><i></i><i></i><i></i><span>Ativar Foco</span></div>
+        <div style="padding:3mm;background:#1a1f2b"><div style="border-radius:9px;background:#2a3142;padding:2.5mm 3mm;display:flex;gap:2.5mm;align-items:center">
+          <span class="aic" style="background:#5e5ce6;width:18px;height:18px;font-size:10px">☾</span>
+          <span><b style="color:#64D2FF">Ativar</b> <b style="color:#64D2FF">Não Perturbe</b> até <b style="color:#64D2FF">Desativar</b></span></div></div></div></div></div></div>
+    <div class="step"><div><h4>Crie o atalho que desliga</h4><p>Repita os passos com <i>Desativar Não Perturbe</i> e dê ao atalho o nome <b>Desativar Foco</b>.</p></div></div>
+    <div class="step"><div><div class="row"><div class="txt"><h4>Informe os nomes no Harbor</h4><p>Em <span class="path">Ajustes<i>›</i>Integrações<i>›</i>Timer de foco → Modo Foco</span>, escreva os nomes
+      <b>exatamente</b> como estão no app Atalhos.</p></div>
+      <div class="win" style="width:70mm;flex:none"><div style="padding:3mm 3.5mm;background:#000;font-size:8pt">
+        <div style="color:var(--amber);font-weight:700;margin-bottom:1.5mm">Timer de foco → Modo Foco</div>
+        <div style="display:grid;grid-template-columns:18mm 1fr;gap:1.5mm;align-items:center">
+          <span style="color:#9aa5b8">Ao iniciar</span><span class="in" style="height:5.5mm;border-radius:6px;background:#1a1f2b;display:flex;align-items:center;padding:0 2mm">Ativar Foco</span>
+          <span style="color:#9aa5b8">Ao terminar</span><span class="in" style="height:5.5mm;border-radius:6px;background:#1a1f2b;display:flex;align-items:center;padding:0 2mm">Desativar Foco</span></div></div></div></div></div></div>
+    <div class="step"><div><h4>Inicie um foco</h4><p>Na aba <span class="ui">Início</span>, escolha <span class="ui">Foco</span>, ajuste o tempo na régua e clique em <span class="ui">Iniciar timer</span>.
+      Na primeira vez, o macOS pode perguntar se o Harbor pode rodar atalhos. Responda <b>Permitir</b>.</p></div></div>
+  </div>
+  <div class="tip"><span class="i">🎯</span><div><span class="t">Dica:</span> você pode usar qualquer atalho, não só o Foco: tocar uma playlist, fechar o Slack, mudar o papel de parede…</div></div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<!-- ═══════════════════════════ 09 PINS ═══════════════════════════ -->
+<section class="page" id="pins" data-part="pins">
+  <script>w(runhead('09 · Apps fixados'))</script>
+  <div class="chead"><div class="num">09</div><div><h2>Apps fixados, badges e microfone</h2>
+    <div class="meta"><span class="pill">⏱ 1 min</span><span class="pill p">Badges requerem Acessibilidade</span></div></div></div>
+  <div class="why"><div class="t">Por que precisa de atenção</div>Os <b>badges</b>, as bolinhas com o número de notificações, vêm do Dock. O Harbor os lê pela <b>Acessibilidade</b>,
+    a mesma permissão do capítulo 03. Sem ela, as bolhas funcionam normalmente, só que sem os números.</div>
+
+  <div class="desk" style="margin-bottom:4mm"><div class="menubar"><span>Safari</span><span>Arquivo</span><span>Editar</span><span>Visualizar</span></div>
+    <div class="area" style="height:16mm">
+      <div class="isl" style="width:46mm"><span style="width:6mm;height:6mm;border-radius:1.6mm;background:linear-gradient(135deg,var(--gold),var(--pink))"></span><script>w(bars(5))</script></div>
+      <div class="bub" style="left:calc(50% + 25mm);box-shadow:0 0 0 1.5px #FF9F0A">🎙️</div>
+      <div class="bub" style="left:calc(50% + 34.5mm)">💬<span class="badge">3</span></div>
+      <div class="bub" style="left:calc(50% + 44mm)">✉️<span class="badge">12</span></div>
+      <div class="bub" style="left:calc(50% + 53.5mm);font-size:7pt;font-weight:700;color:var(--amber)">84m</div>
+      <div style="position:absolute;left:calc(50% + 25mm);top:10.5mm;font-size:7pt;color:var(--mute)">mic &nbsp;&nbsp;&nbsp;&nbsp;&nbsp; apps fixados &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; odômetro</div>
+    </div></div>
+
+  <div class="steps">
+    <div class="step"><div><h4>Fixe um app</h4><p>Com o app na frente, aperte <kbd>⌥</kbd> <kbd>P</kbd>. Ou, em <span class="path">Ajustes<i>›</i>Apps fixados</span>, clique em <span class="ui">＋ Fixar app aberto</span>.</p>
+      <div class="fig"><img class="shot" src="img/settings.png"></div></div></div>
+    <div class="step"><div><h4>Como as bolhas funcionam</h4><p>Quando você sai de um app fixado, ele vira uma bolha à <b>direita do notch</b>. Clique na bolha para voltar a ele.
+      Para desafixar, clique no <b>×</b> do app na mesma tela de ajustes.</p></div></div>
+    <div class="step"><div><h4>Bolha do microfone</h4><p>Aperte <kbd>⌥</kbd> <kbd>M</kbd> para silenciar o microfone em todos os apps. A bolha fica <b style="color:#ff8fa6">vermelha</b> no mudo
+      e <b style="color:var(--amber)">laranja</b> quando algum app está usando o microfone. Clique nela para alternar. Ao sair do Harbor, o microfone volta ao normal.</p></div></div>
+  </div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<!-- ═══════════════════════════ 10 AGENDA + DOWNLOADS ═══════════════════════════ -->
+<section class="page" id="agenda" data-part="agenda">
+  <script>w(runhead('10 · Reuniões e downloads'))</script>
+  <div class="chead"><div class="num">10</div><div><h2>Reuniões e downloads</h2>
+    <div class="meta"><span class="pill">⏱ 2 min</span><span class="pill p">Calendários</span><span class="pill p">Pasta Downloads</span></div></div></div>
+
+  <h3>📅 Agenda e reuniões</h3>
+  <div class="why"><div class="t">Por que precisa de atenção</div>O Harbor lê a agenda do <b>macOS</b> (app Calendário), e não direto do Google ou do Outlook. Se a sua agenda de trabalho
+    não aparece no app Calendário, ela também não aparece no Harbor.</div>
+  <div class="steps">
+    <div class="step"><div><h4>Adicione sua conta ao macOS</h4><p>Em <span class="path">Ajustes do Sistema<i>›</i>Contas de Internet</span>, adicione a conta Google, Microsoft ou iCloud e ligue <b>Calendários</b>.</p></div></div>
+    <div class="step"><div><h4>Permita o acesso</h4><p>Abra a aba <span class="ui">Agenda</span> e responda <b>Permitir Acesso Total</b> no pedido do macOS.</p></div></div>
+    <div class="step"><div><div class="row"><div class="txt"><h4>Pronto</h4><p>Nos 10 minutos antes de uma reunião, o notch mostra uma contagem regressiva. Eventos com link do Meet, Zoom ou Teams ganham um botão <span class="ui">Entrar</span>.</p></div>
+      <div class="desk" style="width:64mm;flex:none"><div class="area" style="height:12mm"><div class="isl" style="width:56mm"><span style="font-size:9pt">📅</span><span style="font-size:7.5pt">Daily do time</span><b style="color:var(--amber);font-size:8pt">em 4 min</b></div></div></div></div></div></div>
+  </div>
+
+  <h3 style="margin-top:6mm">⬇️ Downloads ao vivo</h3>
+  <div class="why"><div class="t">Por que precisa de atenção</div>O Harbor acompanha a pasta <b>Downloads</b>, e o macOS pede uma autorização separada para ela. Os navegadores compatíveis são Chrome, Edge, Brave, Safari e Firefox.</div>
+  <div class="steps">
+    <div class="step"><div><div class="row"><div class="txt"><h4>Autorize a pasta Downloads</h4><p>No primeiro download, o macOS pergunta se o Harbor pode acessar a pasta Downloads. Responda <b>Permitir</b>.
+      Se você negou sem querer, ative o Harbor em <span class="path">Privacidade e Segurança<i>›</i>Arquivos e Pastas</span>.</p></div>
+      <div class="desk" style="width:52mm;flex:none"><div class="area" style="height:12mm"><div class="isl" style="width:44mm">
+        <svg width="20" height="20" viewBox="0 0 20 20"><circle cx="10" cy="10" r="8" stroke="#333" stroke-width="3" fill="none"/><circle cx="10" cy="10" r="8" stroke="#64D2FF" stroke-width="3" fill="none" stroke-dasharray="50.3" stroke-dashoffset="18" transform="rotate(-90 10 10)" stroke-linecap="round"/></svg>
+        <span style="font-size:7.5pt">relatorio.pdf</span><b style="color:var(--cyan);font-size:8pt">64%</b></div></div></div></div></div></div>
+    <div class="step"><div><h4>Ao terminar</h4><p>O arquivo vai para a <span class="ui">Bandeja</span>, pronto para arrastar ou enviar por AirDrop, e um aviso aparece no notch.</p></div></div>
+  </div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<!-- ═══════════════════════════ 11 PROBLEMAS ═══════════════════════════ -->
+<section class="page" id="problemas" data-part="problemas">
+  <script>w(runhead('11 · Solução de problemas'))</script>
+  <div class="chead"><div class="num">11</div><div><h2>Solução de problemas</h2><div class="lead">Os problemas mais comuns e a referência de atalhos.</div></div></div>
+
+  <table>
+    <tr><th style="width:38%">Problema</th><th>Solução</th></tr>
+    <tr><td>O app não abre (“não pode ser aberto”)</td><td>Libere a primeira abertura (capítulo 01, passo 3).</td></tr>
+    <tr><td>Dei a permissão, mas não funciona</td><td>Remova o Harbor da lista com <b>−</b>, adicione de novo com <b>+</b> e reabra o app.</td></tr>
+    <tr><td>A música não aparece</td><td>Em <span class="path">Privacidade e Segurança<i>›</i>Automação</span>, ligue o Spotify e o Música abaixo do Harbor.</td></tr>
+    <tr><td>O aviso nativo de volume continua aparecendo</td><td>Confira se a Acessibilidade está ativa e reabra o Harbor (capítulo 03).</td></tr>
+    <tr><td>O vidro ficou só desfocado, sem refração</td><td>Falta a Gravação de Tela, ou o app ainda não foi reaberto (capítulo 04).</td></tr>
+    <tr><td>A aba PRs mostra um erro</td><td>Rode <code>gh auth status</code>. Se precisar, rode <code>gh auth login</code> (capítulo 06).</td></tr>
+    <tr><td>PRs da empresa não aparecem</td><td>Autorize o GitHub CLI no SSO da organização (capítulo 06).</td></tr>
+    <tr><td>O Claude Code não aparece no notch</td><td>Confira se aparece <i>✓ Ativo</i> em Integrações e reinicie as sessões do Claude Code.</td></tr>
+    <tr><td>O Spotify não conecta</td><td>O Redirect URI precisa ser exatamente <code>http://127.0.0.1:47878/callback</code>.</td></tr>
+    <tr><td>O island some em tela cheia</td><td>Isso é intencional. Desligue <span class="ui">Ocultar em tela cheia</span> em <span class="path">Ajustes<i>›</i>Geral</span>.</td></tr>
+    <tr><td>Monitor externo sem notch</td><td>Escolha a tela em <span class="path">Ajustes<i>›</i>Geral<i>›</i>Telas</span>. Em telas sem notch, o island fica no topo.</td></tr>
+  </table>
+
+  <h3 style="margin-top:6mm">Atalhos de teclado</h3>
+  <div class="grid2">
+    <table>
+      <tr><td><kbd>⌥</kbd> <kbd>Espaço</kbd></td><td>Abrir / fechar</td></tr>
+      <tr><td><kbd>⌥</kbd> <kbd>V</kbd></td><td>Histórico de cópias com busca</td></tr>
+      <tr><td><kbd>⌥</kbd> <kbd>N</kbd></td><td>Nota rápida</td></tr>
+      <tr><td><kbd>⌥</kbd> <kbd>M</kbd></td><td>Mudo do microfone</td></tr>
+    </table>
+    <table>
+      <tr><td><kbd>⌥</kbd> <kbd>P</kbd></td><td>Fixar o app que está na frente</td></tr>
+      <tr><td><kbd>⌥</kbd> <kbd>⇧</kbd> <kbd>C</kbd></td><td>Conta-gotas</td></tr>
+      <tr><td><kbd>Esc</kbd></td><td>Fechar o island</td></tr>
+      <tr><td><kbd>⌘</kbd> <kbd>C</kbd></td><td>Vai para o histórico de cópias</td></tr>
+    </table>
+  </div>
+
+  <div class="tip" style="margin-top:6mm"><span class="i">⚓</span><div><span class="t">Ainda com problema?</span> Em <span class="path">Ajustes<i>›</i>Sobre</span>, clique em <span class="ui">Reportar um problema</span>. O formulário já vem com a versão do Harbor e do macOS. Para ideias e sugestões, use <span class="ui">Enviar feedback</span>.</div></div>
+  <script>w(WAVES)</script><div class="foot"></div>
+</section>
+
+<script>
+// ?only=<data-part> → mantém só as páginas daquele capítulo (PDFs individuais)
+const only = new URLSearchParams(location.search).get('only');
+if (only) document.querySelectorAll('.page').forEach(p => { if (p.dataset.part !== only) p.remove(); });
+// Marca páginas cujo conteúdo transborda (o gerador avisa)
+window.addEventListener('load', () => {
+  const over = [...document.querySelectorAll('.page')].filter(p => p.scrollHeight > p.clientHeight + 2).map(p => p.dataset.part + ':' + (p.scrollHeight - p.clientHeight));
+  document.body.dataset.overflow = over.join(',');
+});
+</script>
+</body>
+</html>

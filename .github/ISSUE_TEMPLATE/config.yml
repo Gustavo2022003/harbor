@@ -1,0 +1,5 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📘 Manual (PDF)
+    url: https://github.com/Gustavo2022003/harbor/blob/main/docs/manual/Harbor-Manual.pdf
+    about: Passo a passo das configurações que pedem mais atenção. Talvez a resposta já esteja lá.

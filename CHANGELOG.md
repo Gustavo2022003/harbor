@@ -4,6 +4,16 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 
 ## [Unreleased]
 
+### Adicionado
+- **Manual ilustrado em PDF** (`docs/manual/Harbor-Manual.pdf`) e um PDF por tutorial (`docs/manual/tutoriais/`), gerados com `make docs`.
+- Banners do README no visual do Harbor.
+- **Ajustes › Sobre**: versão, links para o repositório oficial, feedback, reportar um problema (com a versão já preenchida) e manual.
+- "Enviar feedback…" e "Repositório oficial" no menu da barra de menus.
+- Modelos de issue para feedback e bugs.
+
+### Alterado
+- Versão e botão Sair saíram do rodapé da barra lateral dos Ajustes e foram para a seção Sobre.
+
 ## [2.1.0] - 2026-11-08
 
 ### Adicionado

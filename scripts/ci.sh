@@ -60,6 +60,9 @@ if [[ $QUICK -eq 0 && $FAILS -eq 0 ]]; then
   rm -rf "$APP" "$SHOTS"; mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources" "$SHOTS"
   cp .build/release/Harbor "$APP/Contents/MacOS/"
   cp Resources/Info.plist "$APP/Contents/"; cp Resources/AppIcon.icns "$APP/Contents/Resources/"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $V" "$APP/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(git rev-list --count HEAD)" "$APP/Contents/Info.plist"
+  /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string AppIcon" "$APP/Contents/Info.plist" 2>/dev/null || true
   codesign --force --sign - "$APP" 2>/dev/null   # ad-hoc: não toca nas Chaves
 
   "$APP/Contents/MacOS/Harbor" --snapshot "$PWD/$SHOTS" >"$OUT/smoke.log" 2>&1 &

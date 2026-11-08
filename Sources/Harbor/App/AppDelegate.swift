@@ -18,6 +18,9 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "Abrir Harbor", action: #selector(openNook), keyEquivalent: "").target = self
         menu.addItem(withTitle: "Ajustes…", action: #selector(openSettings), keyEquivalent: ",").target = self
         menu.addItem(.separator())
+        menu.addItem(withTitle: "Enviar feedback…", action: #selector(openFeedback), keyEquivalent: "").target = self
+        menu.addItem(withTitle: "Repositório oficial", action: #selector(openRepo), keyEquivalent: "").target = self
+        menu.addItem(.separator())
         menu.addItem(withTitle: "Sair do Harbor", action: #selector(quit), keyEquivalent: "q").target = self
         item.menu = menu
         statusItem = item
@@ -33,5 +36,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openNook() { controller.open(tab: .nook, pinned: true) }
     @objc private func openSettings() { controller.open(tab: .settings, pinned: true) }
+    @objc private func openFeedback() { HarborLinks.open(HarborLinks.feedback) }
+    @objc private func openRepo() { HarborLinks.open(HarborLinks.repo) }
     @objc private func quit() { NSApp.terminate(nil) }
 }
