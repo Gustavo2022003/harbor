@@ -64,6 +64,7 @@ final class NotchController {
                                          tint: Theme.green), duration: 3.5)
         }
         downloads.start()
+        pins.startBadges()
         timer.onFinish = { [weak self] in
             guard let self else { return }
             let focusEnded = self.timer.mode == .pause // já trocou de modo

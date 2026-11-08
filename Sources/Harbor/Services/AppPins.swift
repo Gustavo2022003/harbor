@@ -1,4 +1,5 @@
 import AppKit
+import ApplicationServices
 
 /// Apps fixados: quando não estão na frente, aparecem como bolhas à direita do notch.
 final class AppPinStore: ObservableObject {
@@ -14,6 +15,9 @@ final class AppPinStore: ObservableObject {
     @Published private(set) var pinned: [String] = UserDefaults.standard.stringArray(forKey: "pins.apps") ?? []
     /// Bolhas visíveis agora: fixados, abertos e que não estão na frente.
     @Published private(set) var visible: [PinnedApp] = []
+    /// Badges do Dock (ex.: "3") por bundle ID — lidos via Acessibilidade.
+    @Published private(set) var badges: [String: String] = [:]
+    private var badgeTimer: Timer?
 
     var onAlert: ((NotchAlert) -> Void)?
 
@@ -33,6 +37,44 @@ final class AppPinStore: ObservableObject {
     }
 
     func isPinned(_ bundleID: String) -> Bool { pinned.contains(bundleID) }
+
+    // MARK: - Badges do Dock
+
+    func startBadges() {
+        let t = Timer(timeInterval: 3, repeats: true) { [weak self] _ in self?.refreshBadges() }
+        RunLoop.main.add(t, forMode: .common)
+        badgeTimer = t
+        refreshBadges()
+    }
+
+    private func refreshBadges() {
+        guard !pinned.isEmpty, AXIsProcessTrusted(),
+              let dock = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock").first
+        else { if !badges.isEmpty { badges = [:] }; return }
+
+        func attr(_ el: AXUIElement, _ name: String) -> CFTypeRef? {
+            var v: CFTypeRef?
+            return AXUIElementCopyAttributeValue(el, name as CFString, &v) == .success ? v : nil
+        }
+
+        var found: [String: String] = [:]
+        let app = AXUIElementCreateApplication(dock.processIdentifier)
+        let lists = (attr(app, kAXChildrenAttribute) as? [AXUIElement]) ?? []
+        for list in lists {
+            for item in (attr(list, kAXChildrenAttribute) as? [AXUIElement]) ?? [] {
+                guard let label = attr(item, "AXStatusLabel") as? String, !label.isEmpty else { continue }
+                var id: String?
+                if let url = attr(item, kAXURLAttribute) as? URL {
+                    id = Bundle(url: url)?.bundleIdentifier
+                }
+                if id == nil, let title = attr(item, kAXTitleAttribute) as? String {
+                    id = pinned.first { Self.info($0)?.name == title }
+                }
+                if let id, pinned.contains(id) { found[id] = label }
+            }
+        }
+        if found != badges { badges = found }
+    }
 
     /// ⌥P: fixa/desafixa o app que está na frente.
     func toggleFrontmost() {

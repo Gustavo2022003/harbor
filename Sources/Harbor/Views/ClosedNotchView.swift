@@ -351,12 +351,26 @@ struct PinnedAppBubble: View {
                 .frame(width: height + 6, height: height)
                 .background(Capsule().fill(Color.black))
                 .overlay(Capsule().strokeBorder(Color.white.opacity(hover ? 0.25 : 0.07)))
+                .overlay(alignment: .topTrailing) {
+                    if let badge = pins.badges[app.bundleID] {
+                        Text(badge.count > 3 ? "99+" : badge)
+                            .font(.system(size: 8.5, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 3.5)
+                            .frame(minWidth: 13, minHeight: 13)
+                            .background(Capsule().fill(Color.red))
+                            .overlay(Capsule().strokeBorder(Color.black, lineWidth: 1.5))
+                            .offset(x: 4, y: -3)
+                            .transition(.scale.combined(with: .opacity))
+                    }
+                }
+                .animation(.spring(response: 0.35, dampingFraction: 0.6), value: pins.badges[app.bundleID])
                 .scaleEffect(hover ? 1.12 : 1)
                 .contentShape(Capsule())
         }
         .buttonStyle(PressableStyle())
         .onHover { h in withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { hover = h } }
-        .help("Ir para \(app.name)")
+        .help("Ir para \(app.name)" + (pins.badges[app.bundleID].map { " · \($0) não lidas" } ?? ""))
         .contextMenu {
             Button("Ir para \(app.name)") { pins.activate(app.bundleID) }
             Button("Desafixar \(app.name)") { withAnimation { pins.unpin(app.bundleID) } }
