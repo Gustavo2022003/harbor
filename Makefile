@@ -1,5 +1,5 @@
 # Harbor ⚓️ — atalhos de desenvolvimento
-.PHONY: build run install dist icon signing ci hooks clean release help
+.PHONY: build run install dist icon signing ci hooks docs clean release help
 
 build:            ## Compila build/Harbor.app
 	@scripts/build.sh
@@ -15,6 +15,9 @@ dist:             ## Gera dist/Harbor-<versão>.zip e .dmg
 
 icon:             ## Regera Resources/AppIcon.icns a partir de scripts/make-icon.swift
 	@scripts/make-icon.sh
+
+docs:             ## Regera o manual em PDF e os banners do README
+	@scripts/make-docs.sh
 
 signing:          ## Cria o certificado "Harbor Dev" (uma vez por Mac)
 	@scripts/setup-signing.sh

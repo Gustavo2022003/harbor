@@ -38,7 +38,7 @@ struct SettingsTabView: View {
     @FocusState private var fieldFocused: Bool
 
     enum SettingsSection: String, CaseIterable, Identifiable {
-        case general, visual, integrations, pins
+        case general, visual, integrations, pins, about
         var id: String { rawValue }
         var title: String {
             switch self {
@@ -46,6 +46,7 @@ struct SettingsTabView: View {
             case .visual: return "Visual"
             case .integrations: return "Integrações"
             case .pins: return "Apps fixados"
+            case .about: return "Sobre"
             }
         }
         var icon: String {
@@ -54,6 +55,7 @@ struct SettingsTabView: View {
             case .visual: return "paintpalette.fill"
             case .integrations: return "puzzlepiece.extension.fill"
             case .pins: return "pin.fill"
+            case .about: return "info.circle.fill"
             }
         }
     }
@@ -85,6 +87,8 @@ struct SettingsTabView: View {
                     }
                 case .pins:
                     pinsSection
+                case .about:
+                    aboutSection
                 case .integrations:
                     HStack(alignment: .top, spacing: 14) {
                         claudeColumn.frame(maxWidth: .infinity, alignment: .leading)
@@ -347,12 +351,56 @@ struct SettingsTabView: View {
                 .buttonStyle(PressableStyle())
             }
             Spacer(minLength: 0)
-            HStack(spacing: 4) {
-                Text("v" + (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "?")).font(.system(size: 10)).foregroundStyle(Theme.secondary)
-                Spacer()
+        }
+    }
+
+    // MARK: Sobre
+
+    private var aboutSection: some View {
+        HStack(alignment: .top, spacing: 14) {
+            VStack(spacing: 5) {
+                Image(nsImage: NSApp.applicationIconImage)
+                    .resizable().frame(width: 52, height: 52)
+                Text("Harbor").font(.system(size: 14, weight: .bold))
+                Text("v\(HarborLinks.version) (\(HarborLinks.build))")
+                    .font(.system(size: 10, design: .monospaced)).foregroundStyle(Theme.secondary)
                 Button("Sair") { NSApp.terminate(nil) }.buttonStyle(PillButtonStyle(tint: .red)).scaleEffect(0.8)
             }
+            .frame(width: 118)
+            ModuleDivider()
+            VStack(alignment: .leading, spacing: 6) {
+                sectionTitle("Links")
+                LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
+                    linkCard("Repositório oficial", "Código, releases e documentação", "chevron.left.forwardslash.chevron.right", HarborLinks.repo)
+                    linkCard("Enviar feedback", "Ideias, sugestões e elogios", "bubble.left.and.text.bubble.right.fill", HarborLinks.feedback)
+                    linkCard("Reportar um problema", "Já vai com a versão do app e do macOS", "ladybug.fill", HarborLinks.bugWithContext)
+                    linkCard("Manual (PDF)", "Passo a passo das configurações", "book.fill", HarborLinks.manual)
+                }
+            }
         }
+    }
+
+    private func linkCard(_ title: String, _ sub: String, _ icon: String, _ url: URL) -> some View {
+        Button { HarborLinks.open(url) } label: {
+            HStack(spacing: 9) {
+                Image(systemName: icon)
+                    .font(.system(size: 13, weight: .semibold)).foregroundStyle(Theme.orange)
+                    .frame(width: 28, height: 28)
+                    .background(Circle().fill(Theme.orange.opacity(0.16)))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(title).font(.system(size: 12, weight: .semibold))
+                    Text(sub).font(.system(size: 10)).foregroundStyle(Theme.secondary).lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "arrow.up.right").font(.system(size: 10, weight: .bold)).foregroundStyle(Theme.secondary)
+            }
+            .padding(.horizontal, 10).frame(height: 44)
+            .background(RoundedRectangle(cornerRadius: 11, style: .continuous).fill(Theme.card))
+            .overlay(RoundedRectangle(cornerRadius: 11, style: .continuous).stroke(Theme.stroke))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(PressableStyle())
+        .help(url.absoluteString)
     }
 
     // MARK: Geral › Telas

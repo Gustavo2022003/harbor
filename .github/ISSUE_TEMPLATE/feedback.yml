@@ -1,0 +1,24 @@
+name: 💬 Feedback
+description: Ideias, sugestões, elogios ou qualquer coisa sobre o Harbor
+title: "[Feedback] "
+labels: ["feedback"]
+body:
+  - type: markdown
+    attributes:
+      value: "Obrigado por ajudar a melhorar o Harbor! ⚓️"
+  - type: dropdown
+    id: kind
+    attributes:
+      label: Tipo
+      options: ["Ideia de feature", "Melhoria em algo que já existe", "Elogio", "Outro"]
+    validations: { required: true }
+  - type: textarea
+    id: feedback
+    attributes:
+      label: Conte para a gente
+      placeholder: "O que você gostaria de ver, ou o que poderia ser melhor?"
+    validations: { required: true }
+  - type: input
+    id: version
+    attributes:
+      label: Versão do Harbor (opcional)

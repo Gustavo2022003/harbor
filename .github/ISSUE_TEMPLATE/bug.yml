@@ -1,0 +1,36 @@
+name: 🐞 Reportar um problema
+description: Algo não funciona como deveria
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: textarea
+    id: what
+    attributes:
+      label: O que aconteceu?
+      placeholder: "Descreva o problema e o que você esperava que acontecesse."
+    validations: { required: true }
+  - type: textarea
+    id: steps
+    attributes:
+      label: Como reproduzir
+      placeholder: "1. Abra a aba …\n2. Clique em …\n3. …"
+  - type: input
+    id: version
+    attributes:
+      label: Versão do Harbor
+      description: Em Ajustes › Sobre (preenchida automaticamente pelo botão "Reportar um problema").
+    validations: { required: true }
+  - type: input
+    id: macos
+    attributes:
+      label: Versão do macOS
+    validations: { required: true }
+  - type: input
+    id: mac
+    attributes:
+      label: Modelo do Mac
+      placeholder: "ex.: MacBook Pro 14\" M3"
+  - type: textarea
+    id: extra
+    attributes:
+      label: Capturas de tela ou observações
