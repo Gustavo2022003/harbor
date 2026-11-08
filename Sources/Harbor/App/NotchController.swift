@@ -20,6 +20,7 @@ final class NotchController {
     let audio = AudioLevels.shared
     let keys = MediaKeyInterceptor()
     let pins = AppPinStore()
+    let mic = MicController()
 
     private var panel: NotchPanel!
     private var screen: NSScreen!
@@ -54,6 +55,8 @@ final class NotchController {
 
         claude.onAlert = { [weak self] a in self?.alerts.show(a, duration: 4) }
         pins.onAlert = { [weak self] a in self?.alerts.show(a, duration: 1.8) }
+        mic.onAlert = { [weak self] a in self?.alerts.show(a, duration: 1.6) }
+        mic.start()
         timer.onFinish = { [weak self] in
             guard let self else { return }
             let focusEnded = self.timer.mode == .pause // já trocou de modo
@@ -117,6 +120,9 @@ final class NotchController {
         }
         hk.register(HotKeys.note) { [weak self] in
             self?.openFromShortcut(tab: .tools, focus: .note)
+        }
+        hk.register(HotKeys.mic) { [weak self] in
+            self?.mic.toggle()
         }
         hk.register(HotKeys.pinApp) { [weak self] in
             self?.pins.toggleFrontmost()
@@ -228,6 +234,7 @@ final class NotchController {
                 .environmentObject(audio)
                 .environmentObject(keys)
                 .environmentObject(pins)
+                .environmentObject(mic)
             let host = NSHostingView(rootView: root)
             host.sizingOptions = []
             host.frame = NSRect(origin: .zero, size: rect.size)
@@ -254,15 +261,18 @@ final class NotchController {
         let f = screen.frame
         let s = vm.shapeSize(open: false)
         // depois das bolhas de apps fixados, se houver
-        let apps = pins.visible.isEmpty ? 0 : vm.leftBubblesWidth + 5
+        let apps = hasClickableBubbles ? vm.leftBubblesWidth + 5 : 0
         let x = f.midX + s.width / 2 + vm.bubbleGap + apps
         let h = vm.notchSize.height
         return NSRect(x: x - 2, y: f.maxY - h, width: vm.bubbleWidth + 6, height: h + 1)
     }
 
-    /// Área das bolhas de apps fixados (logo à direita do island fechado).
+    /// Bolhas clicáveis à direita: microfone (em uso ou mudo) e apps fixados.
+    private var hasClickableBubbles: Bool { mic.isMuted || mic.inUse || !pins.visible.isEmpty }
+
+    /// Área das bolhas clicáveis (logo à direita do island fechado).
     private func leftBubblesRect() -> NSRect? {
-        guard !pins.visible.isEmpty, vm.leftBubblesWidth > 0 else { return nil }
+        guard hasClickableBubbles, vm.leftBubblesWidth > 0 else { return nil }
         let f = screen.frame
         let s = vm.shapeSize(open: false)
         let minX = f.midX + s.width / 2 + vm.bubbleGap

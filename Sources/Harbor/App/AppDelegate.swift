@@ -23,6 +23,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         statusItem = item
     }
 
+    func applicationWillTerminate(_ notification: Notification) {
+        controller.mic.restoreOnQuit()
+    }
+
     func application(_ application: NSApplication, open urls: [URL]) {
         urls.forEach { controller.handle(url: $0) }
     }

@@ -292,10 +292,14 @@ struct OdometerBubble: View {
 struct PinnedAppBubbles: View {
     @EnvironmentObject var pins: AppPinStore
     @EnvironmentObject var vm: NotchViewModel
+    @EnvironmentObject var mic: MicController
 
     var body: some View {
         let h = max(18, vm.notchSize.height - 6)
         HStack(spacing: 5) {
+            if mic.isMuted || mic.inUse {
+                MicBubble(height: h).transition(.scale(scale: 0.3).combined(with: .opacity))
+            }
             ForEach(pins.visible) { app in
                 PinnedAppBubble(app: app, height: h)
                     .transition(.scale(scale: 0.3).combined(with: .opacity))
@@ -336,5 +340,36 @@ struct PinnedAppBubble: View {
             Button("Ir para \(app.name)") { pins.activate(app.bundleID) }
             Button("Desafixar \(app.name)") { withAnimation { pins.unpin(app.bundleID) } }
         }
+    }
+}
+
+/// Bolha do microfone: laranja quando em uso, vermelha quando no mudo. Clique alterna o mudo.
+struct MicBubble: View {
+    @EnvironmentObject var mic: MicController
+    let height: CGFloat
+    @Local private var hover = false
+
+    var body: some View {
+        let tint: Color = mic.isMuted ? .red : Theme.orange
+        Button { mic.toggle() } label: {
+            HStack(spacing: 4) {
+                Image(systemName: mic.isMuted ? "mic.slash.fill" : "mic.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .contentTransition(.symbolEffect(.replace))
+                if mic.isMuted {
+                    Text("Mudo").font(.system(size: 10.5, weight: .bold, design: .rounded))
+                }
+            }
+            .foregroundStyle(tint)
+            .padding(.horizontal, 9)
+            .frame(height: height)
+            .background(Capsule().fill(Color.black))
+            .overlay(Capsule().strokeBorder(tint.opacity(hover ? 0.8 : 0.45)))
+            .scaleEffect(hover ? 1.08 : 1)
+            .contentShape(Capsule())
+        }
+        .buttonStyle(PressableStyle())
+        .onHover { h in withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { hover = h } }
+        .help(mic.isMuted ? "Microfone mudo — clique para ativar (⌥M)" : "Microfone em uso — clique para mutar (⌥M)")
     }
 }
