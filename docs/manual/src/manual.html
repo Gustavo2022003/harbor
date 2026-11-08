@@ -78,7 +78,7 @@ h3{ font-size:12pt; margin:5mm 0 2mm; color:#fff }
 p{ margin:0 0 2.2mm }
 .muted{ color:var(--mute) }
 
-.why{ border-radius:12px; padding:2.8mm 4.5mm; background:linear-gradient(90deg,rgba(100,210,255,.11),rgba(100,210,255,.03));
+.why{ border-radius:12px; padding:2.8mm 4.5mm; background:rgba(100,210,255,.07);
   border:1px solid rgba(100,210,255,.22); margin-bottom:4mm }
 .why .t{ color:var(--cyan); font-weight:700; font-size:8.5pt; letter-spacing:.07em; text-transform:uppercase; margin-bottom:1mm }
 .tip,.warn{ border-radius:12px; padding:3mm 4.5mm; margin-top:3.5mm; display:flex; gap:3.5mm; align-items:flex-start }
@@ -195,6 +195,16 @@ td:first-child{ font-weight:600; color:#fff; white-space:nowrap }
 .box h4{ margin:0 0 2mm; font-size:10pt }
 .box ul{ margin:0; padding-left:4.5mm } .box li{ margin:.6mm 0 }
 .dot{ display:inline-block; width:7px; height:7px; border-radius:50%; margin-right:5px; vertical-align:middle }
+/* PDF-safe: o Preview (PDFKit) pinta sombras e filtros do Chrome como retângulos opacos.
+   Nada de box-shadow / filter / backdrop-filter: profundidade só com bordas e cores sólidas. */
+*,*::before,*::after{ box-shadow:none !important; filter:none !important; text-shadow:none !important;
+  backdrop-filter:none !important; -webkit-backdrop-filter:none !important }
+.step::before{ outline:2px solid rgba(255,159,10,.28); outline-offset:2px }
+.win,.term,.dlg{ border-color:rgba(255,255,255,.18) }
+.it.hl{ outline:1.5px solid var(--amber); outline-offset:-1.5px }
+.sys .pm b.hl{ outline:1.5px solid var(--amber); outline-offset:-1.5px }
+.form .in.hl{ outline:2px solid rgba(255,159,10,.35) }
+.cover .island{ border:1px solid rgba(255,159,10,.35); border-top:0 }
 </style>
 </head>
 <body>
@@ -372,9 +382,9 @@ const runhead = ch => `<div class="run"><img src="${ICON}"><span>Manual do Harbo
     <div class="area" style="height:24mm">
       <div class="isl" style="width:62mm;padding:0 3mm"><span style="font-size:10pt">🔊</span>
         <span style="flex:1;height:5px;border-radius:3px;background:linear-gradient(90deg,var(--amber) 64%,#333 64%)"></span><span style="font-size:8pt;font-weight:700">64%</span></div>
-      <div style="position:absolute;right:8mm;top:7mm;width:22mm;height:16mm;border-radius:10px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:15pt;opacity:.55">🔊
+      <div style="position:absolute;right:8mm;top:3mm;width:22mm;height:14mm;border-radius:10px;background:rgba(255,255,255,.12);display:flex;align-items:center;justify-content:center;font-size:15pt;opacity:.55">🔊
         <svg style="position:absolute;inset:0" viewBox="0 0 100 70"><path d="M8 8 L92 62 M92 8 L8 62" stroke="#FF375F" stroke-width="6" stroke-linecap="round"/></svg></div>
-      <div style="position:absolute;right:6mm;bottom:-1mm;font-size:7pt;color:var(--mute)">aviso nativo: oculto</div>
+      <div style="position:absolute;right:4mm;bottom:1.5mm;width:30mm;white-space:nowrap;text-align:center;font-size:7pt;color:var(--mute)">aviso nativo: oculto</div>
     </div></div>
 
   <div class="steps">
@@ -416,7 +426,7 @@ const runhead = ch => `<div class="run"><img src="${ICON}"><span>Manual do Harbo
       <div style="margin-top:5mm;border-radius:14px;overflow:hidden;position:relative;height:30mm;background:
         repeating-linear-gradient(45deg,#ff9f0a 0 10px,#ff375f 10px 20px,#64d2ff 20px 30px,#183a66 30px 40px)">
         <div style="position:absolute;left:50%;top:0;transform:translateX(-50%);width:70%;height:20mm;border-radius:0 0 7mm 7mm;
-          backdrop-filter:blur(7px) saturate(1.9);-webkit-backdrop-filter:blur(7px) saturate(1.9);background:rgba(10,16,30,.25);
+          background:linear-gradient(180deg,rgba(255,255,255,.38),rgba(255,255,255,.18) 55%,rgba(255,255,255,.30));
           border:1.5px solid rgba(255,255,255,.55);border-top:0;box-shadow:inset 0 -6px 14px rgba(255,255,255,.25),0 10px 24px rgba(0,0,0,.4);
           display:flex;align-items:center;justify-content:center;gap:3mm;font-weight:700"><script>w(bars(6,'#fff'))</script> Liquid Glass</div>
       </div><div class="cap">Com a Refração, o fundo “dobra” nas bordas do island</div>
