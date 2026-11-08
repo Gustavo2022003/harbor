@@ -12,8 +12,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private func setupStatusItem() {
         let item = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
-        item.button?.image = NSImage(systemSymbolName: "rectangle.topthird.inset.filled",
-                                     accessibilityDescription: "Harbor")
+        item.button?.image = MenuBarIcon.anchor()
         let menu = NSMenu()
         menu.addItem(withTitle: "Abrir Harbor", action: #selector(openNook), keyEquivalent: "").target = self
         menu.addItem(withTitle: "Ajustes…", action: #selector(openSettings), keyEquivalent: ",").target = self

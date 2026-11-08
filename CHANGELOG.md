@@ -12,6 +12,7 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 - Modelos de issue para feedback e bugs.
 
 ### Alterado
+- Ícone da barra de menus agora é uma âncora (desenhada em código, se adapta à barra clara/escura).
 - Versão e botão Sair saíram do rodapé da barra lateral dos Ajustes e foram para a seção Sobre.
 
 ## [2.1.0] - 2026-11-08
