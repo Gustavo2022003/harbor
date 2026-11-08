@@ -1,0 +1,68 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*.*.*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build, assinar e publicar
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Selecionar Xcode
+        uses: maxim-lobanov/setup-xcode@v1
+        with:
+          xcode-version: latest-stable
+
+      - name: Conferir versão (VERSION × tag)
+        run: |
+          test "v$(tr -d '[:space:]' < VERSION)" = "$GITHUB_REF_NAME" \
+            || { echo "::error::VERSION não bate com a tag $GITHUB_REF_NAME"; exit 1; }
+
+      - name: Importar certificado "Harbor Dev"
+        env:
+          P12_BASE64: ${{ secrets.HARBOR_P12_BASE64 }}
+          P12_PASSWORD: ${{ secrets.HARBOR_P12_PASSWORD }}
+        run: |
+          if [ -z "$P12_BASE64" ]; then
+            echo "::warning::Sem certificado — release assinada ad-hoc (permissões não persistem entre versões)"
+            exit 0
+          fi
+          KC="$RUNNER_TEMP/harbor.keychain-db"
+          security create-keychain -p ci "$KC"
+          security set-keychain-settings -lut 21600 "$KC"
+          security unlock-keychain -p ci "$KC"
+          echo "$P12_BASE64" | base64 --decode > "$RUNNER_TEMP/harbor.p12"
+          security import "$RUNNER_TEMP/harbor.p12" -k "$KC" -P "$P12_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple:,codesign: -s -k ci "$KC" >/dev/null
+          security list-keychains -d user -s "$KC" $(security list-keychains -d user | tr -d '"')
+          echo "SIGN_IDENTITY=Harbor Dev" >> "$GITHUB_ENV"
+
+      - name: Build
+        run: scripts/build.sh --dist
+
+      - name: Notas da release (CHANGELOG)
+        run: |
+          V="$(tr -d '[:space:]' < VERSION)"
+          awk -v v="$V" '
+            $0 ~ "^## \\[" v "\\]" {on=1; next}
+            on && /^## \[/ {exit}
+            on {print}
+          ' CHANGELOG.md > notes.md
+          [ -s notes.md ] || echo "Harbor $V" > notes.md
+          cat notes.md
+
+      - name: Publicar
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          V="$(tr -d '[:space:]' < VERSION)"
+          gh release create "$GITHUB_REF_NAME" dist/* \
+            --title "Harbor $V" --notes-file notes.md --verify-tag

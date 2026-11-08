@@ -1,0 +1,49 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<dict>
+    <key>CFBundleDevelopmentRegion</key>
+    <string>pt-BR</string>
+    <key>CFBundleExecutable</key>
+    <string>Harbor</string>
+    <key>CFBundleIdentifier</key>
+    <string>com.gustavo.harbor</string>
+    <key>CFBundleName</key>
+    <string>Harbor</string>
+    <key>CFBundleDisplayName</key>
+    <string>Harbor</string>
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+    <key>CFBundleShortVersionString</key>
+    <string>1.0</string>
+    <key>CFBundleVersion</key>
+    <string>1</string>
+    <key>LSMinimumSystemVersion</key>
+    <string>14.0</string>
+    <key>LSUIElement</key>
+    <true/>
+    <key>NSHighResolutionCapable</key>
+    <true/>
+    <key>NSAppleEventsUsageDescription</key>
+    <string>O Harbor controla o Spotify e o Música para exibir e controlar o que está tocando.</string>
+    <key>CFBundleURLTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleURLName</key>
+            <string>com.gustavo.harbor</string>
+            <key>CFBundleURLSchemes</key>
+            <array>
+                <string>harbor</string>
+            </array>
+        </dict>
+    </array>
+    <key>NSBluetoothAlwaysUsageDescription</key>
+    <string>O Harbor avisa no notch quando seus fones Bluetooth conectam.</string>
+    <key>NSCameraUsageDescription</key>
+    <string>O Harbor mostra a câmera no notch como um espelho.</string>
+    <key>NSCalendarsFullAccessUsageDescription</key>
+    <string>O Harbor mostra seus eventos do dia no notch.</string>
+    <key>NSCalendarsUsageDescription</key>
+    <string>O Harbor mostra seus eventos do dia no notch.</string>
+</dict>
+</plist>

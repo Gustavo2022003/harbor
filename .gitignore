@@ -1,0 +1,16 @@
+# Build
+.build/
+build/
+dist/
+.swiftpm/
+*.xcodeproj
+DerivedData/
+
+# Assinatura (nunca versionar)
+*.p12
+*.pem
+*.cer
+p12-password.txt
+
+# macOS
+.DS_Store
