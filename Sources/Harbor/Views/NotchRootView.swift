@@ -14,6 +14,7 @@ struct NotchRootView: View {
     @EnvironmentObject var shelf: ShelfStore
     @EnvironmentObject var odometer: MouseOdometer
     @EnvironmentObject var pins: AppPinStore
+    @EnvironmentObject var mic: MicController
     @EnvironmentObject var media: MediaController
     @AppStorage(Prefs.liveGlow) private var liveGlow = true
 
@@ -46,9 +47,9 @@ struct NotchRootView: View {
                                     topShade: vm.notchSize.height + 8))
             .overlay(alignment: .topTrailing) {
                 // Bolhas à direita do island: apps fixados e odômetro (somem/"são absorvidas" quando ele abre)
-                if !open && (odometer.pinned || !pins.visible.isEmpty) {
+                if !open && (odometer.pinned || !pins.visible.isEmpty || mic.isMuted || mic.inUse) {
                     HStack(spacing: 5) {
-                        if !pins.visible.isEmpty {
+                        if !pins.visible.isEmpty || mic.isMuted || mic.inUse {
                             PinnedAppBubbles()
                                 .transition(.scale(scale: 0.3, anchor: .leading).combined(with: .opacity))
                         }
@@ -70,6 +71,8 @@ struct NotchRootView: View {
             }
             .animation(.spring(response: 0.45, dampingFraction: 0.7), value: pins.visible)
             .animation(.spring(response: 0.45, dampingFraction: 0.7), value: odometer.pinned)
+            .animation(.spring(response: 0.45, dampingFraction: 0.7), value: mic.isMuted)
+            .animation(.spring(response: 0.45, dampingFraction: 0.7), value: mic.inUse)
             .background(alignment: .top) {
                 // Acabamento: notch fechado "vivo" com a música
                 if liveGlow && !open && vm.closedActivity == .music {
@@ -158,6 +161,7 @@ struct OpenNotchView: View {
                 case .nook: NookHomeView()
                 case .media: MediaTabView()
                 case .clipboard: ClipboardTabView()
+                case .prs: PRsTabView()
                 case .calendar: CalendarTabView()
                 case .tray: TrayTabView()
                 case .camera: CameraTabView()

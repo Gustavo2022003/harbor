@@ -392,12 +392,15 @@ struct SettingsTabView: View {
     private var shortcutsColumn: some View {
         VStack(alignment: .leading, spacing: 6) {
             sectionTitle("Atalhos")
-            shortcutRow("Abrir / fechar", HotKeys.toggle.label)
-            shortcutRow("Histórico de cópias", HotKeys.clipboard.label)
-            shortcutRow("Nota rápida", HotKeys.note.label)
-            shortcutRow("Conta-gotas", HotKeys.picker.label)
-            shortcutRow("Fixar app da frente", HotKeys.pinApp.label)
-            shortcutRow("Fechar", "Esc")
+            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible())], alignment: .leading, spacing: 5) {
+                shortcutRow("Abrir", HotKeys.toggle.label)
+                shortcutRow("Cópias", HotKeys.clipboard.label)
+                shortcutRow("Nota", HotKeys.note.label)
+                shortcutRow("Conta-gotas", HotKeys.picker.label)
+                shortcutRow("Fixar app", HotKeys.pinApp.label)
+                shortcutRow("Mudo mic", HotKeys.mic.label)
+                shortcutRow("Fechar", "Esc")
+            }
         }
     }
 

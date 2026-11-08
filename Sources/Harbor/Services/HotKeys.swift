@@ -12,6 +12,7 @@ final class HotKeys {
     static let toggle = Combo(keyCode: UInt32(kVK_Space), modifiers: UInt32(optionKey), label: "⌥ Espaço")
     static let clipboard = Combo(keyCode: UInt32(kVK_ANSI_V), modifiers: UInt32(optionKey), label: "⌥ V")
     static let note = Combo(keyCode: UInt32(kVK_ANSI_N), modifiers: UInt32(optionKey), label: "⌥ N")
+    static let mic = Combo(keyCode: UInt32(kVK_ANSI_M), modifiers: UInt32(optionKey), label: "⌥ M")
     static let pinApp = Combo(keyCode: UInt32(kVK_ANSI_P), modifiers: UInt32(optionKey), label: "⌥ P")
     static let picker = Combo(keyCode: UInt32(kVK_ANSI_C), modifiers: UInt32(optionKey | shiftKey), label: "⌥ ⇧ C")
 

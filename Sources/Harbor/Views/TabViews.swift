@@ -6,9 +6,12 @@ import UniformTypeIdentifiers
 
 struct MediaTabView: View {
     @EnvironmentObject var media: MediaController
+    @EnvironmentObject var spotify: SpotifyAPI
+
+    private var isSpotify: Bool { media.info?.source == .spotify }
 
     var body: some View {
-        HStack(spacing: 22) {
+        HStack(spacing: 18) {
             ArtworkView(image: media.artwork, size: 124, radius: 18)
                 .shadow(color: media.accent.opacity(0.35), radius: 18)
                 .onTapGesture { media.openSourceApp() }
@@ -29,6 +32,16 @@ struct MediaTabView: View {
                             .background(Capsule().fill(media.accent.opacity(0.18)))
                             .foregroundStyle(media.accent)
                     }
+                    if isSpotify && spotify.connected {
+                        Button { spotify.toggleLike() } label: {
+                            Image(systemName: spotify.isLiked ? "heart.fill" : "heart")
+                                .font(.system(size: 16, weight: .semibold))
+                                .foregroundStyle(spotify.isLiked ? Color(red: 0.12, green: 0.84, blue: 0.38) : .white.opacity(0.8))
+                                .contentTransition(.symbolEffect(.replace))
+                        }
+                        .buttonStyle(PressableStyle())
+                        .help(spotify.isLiked ? "Remover das Músicas Curtidas" : "Curtir")
+                    }
                     AudioVisualizer(isPlaying: media.isPlaying, color: media.accent, bars: 5)
                         .padding(.leading, 6)
                 }
@@ -45,8 +58,16 @@ struct MediaTabView: View {
                 .disabled(media.info == nil)
                 .opacity(media.info == nil ? 0.4 : 1)
             }
+
+            ModuleDivider()
+            SpotifyQueueColumn().frame(width: 270)
         }
-        .padding(.horizontal, 16)
+        .padding(.horizontal, 12)
+        // Atualiza fila/curtida ao abrir a aba e a cada troca de música
+        .task(id: media.info?.artKey) {
+            try? await Task.sleep(nanoseconds: 400_000_000)
+            spotify.refresh()
+        }
     }
 
     private var subtitle: String {
@@ -329,5 +350,114 @@ enum AirDrop {
               service.canPerform(withItems: urls) else { return }
         NSApp.activate()
         service.perform(withItems: urls)
+    }
+}
+
+// MARK: - Fila do Spotify
+
+struct SpotifyQueueColumn: View {
+    @EnvironmentObject var spotify: SpotifyAPI
+    @EnvironmentObject var vm: NotchViewModel
+    @AppStorage(SpotifyAPI.clientIDKey) private var clientID = ""
+    @FocusState private var focused: Bool
+    private let green = Color(red: 0.12, green: 0.84, blue: 0.38)
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Label("A seguir", systemImage: "list.bullet")
+                    .font(.system(size: 11.5, weight: .bold)).foregroundStyle(green)
+                Spacer()
+                if spotify.connected {
+                    Menu {
+                        Button("Atualizar") { spotify.refresh() }
+                        Button("Desconectar Spotify") { spotify.disconnect() }
+                    } label: { Image(systemName: "ellipsis") }
+                    .menuStyle(.borderlessButton).menuIndicator(.hidden).fixedSize()
+                }
+            }
+            if spotify.connected {
+                if spotify.queue.isEmpty {
+                    Text(spotify.error ?? "Fila vazia — dê play no Spotify")
+                        .font(.system(size: 11.5)).foregroundStyle(Theme.secondary)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    ScrollView(.vertical, showsIndicators: false) {
+                        VStack(alignment: .leading, spacing: 3) {
+                            ForEach(spotify.queue) { track in QueueRow(track: track) }
+                        }
+                    }
+                }
+            } else {
+                setup
+            }
+        }
+    }
+
+    private var setup: some View {
+        VStack(alignment: .leading, spacing: 5) {
+            Text("Conecte o Spotify para ver a fila e curtir.")
+                .font(.system(size: 11)).foregroundStyle(Theme.secondary)
+                .fixedSize(horizontal: false, vertical: true)
+            HStack(spacing: 4) {
+                Button("1. Criar app ↗") { NSWorkspace.shared.open(URL(string: "https://developer.spotify.com/dashboard")!) }
+                    .buttonStyle(.plain).font(.system(size: 10.5, weight: .semibold)).foregroundStyle(green)
+                Text("com o Redirect URI:").font(.system(size: 10.5)).foregroundStyle(Theme.secondary)
+            }
+            HStack(spacing: 4) {
+                Image(systemName: "doc.on.doc").font(.system(size: 9)).foregroundStyle(Theme.secondary)
+                Button(SpotifyAPI.redirectURI) {
+                    NSPasteboard.general.clearContents()
+                    NSPasteboard.general.setString(SpotifyAPI.redirectURI, forType: .string)
+                }
+                .buttonStyle(.plain).font(.system(size: 10, design: .monospaced)).foregroundStyle(.white.opacity(0.8))
+                .lineLimit(1).fixedSize()
+                .help("Clique para copiar")
+            }
+            HStack(spacing: 6) {
+                TextField("Client ID", text: $clientID)
+                    .textFieldStyle(.plain).font(.system(size: 11.5, design: .monospaced))
+                    .focused($focused)
+                    .padding(.horizontal, 8).frame(height: 24)
+                    .background(RoundedRectangle(cornerRadius: 7).fill(Color.white.opacity(0.08)))
+                Button("Conectar") { focused = false; spotify.connect() }
+                    .buttonStyle(PillButtonStyle(tint: green)).scaleEffect(0.9)
+                    .disabled(clientID.trimmingCharacters(in: .whitespaces).isEmpty)
+            }
+            if let e = spotify.error {
+                Text(e).font(.system(size: 10.5)).foregroundStyle(.red).lineLimit(2)
+            }
+        }
+        .onChange(of: focused) { _, f in vm.keepOpen = f; if f { vm.makeKey?() } }
+    }
+}
+
+struct QueueRow: View {
+    @EnvironmentObject var spotify: SpotifyAPI
+    let track: SpotifyAPI.Track
+    @Local private var hover = false
+
+    var body: some View {
+        Button { spotify.skip(to: track) } label: {
+            HStack(spacing: 8) {
+                AsyncImage(url: track.artworkURL) { img in img.resizable() } placeholder: {
+                    Color.white.opacity(0.08)
+                }
+                .frame(width: 26, height: 26)
+                .clipShape(RoundedRectangle(cornerRadius: 5, style: .continuous))
+                VStack(alignment: .leading, spacing: 0) {
+                    Text(track.name).font(.system(size: 11.5, weight: .semibold)).lineLimit(1)
+                    Text(track.artist).font(.system(size: 10.5)).foregroundStyle(Theme.secondary).lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                if hover { Image(systemName: "play.fill").font(.system(size: 9)).foregroundStyle(Theme.secondary) }
+            }
+            .padding(.horizontal, 5).padding(.vertical, 3)
+            .background(RoundedRectangle(cornerRadius: 7).fill(hover ? Color.white.opacity(0.08) : .clear))
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .onHover { hover = $0 }
+        .help("Pular até esta música")
     }
 }

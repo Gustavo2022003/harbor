@@ -1,7 +1,7 @@
 import SwiftUI
 
 enum NookTab: String, CaseIterable, Identifiable {
-    case nook, media, clipboard, calendar, tray, camera, odometer, tools, settings
+    case nook, media, clipboard, prs, calendar, tray, camera, odometer, tools, settings
     var id: String { rawValue }
 
     var title: String {
@@ -9,6 +9,7 @@ enum NookTab: String, CaseIterable, Identifiable {
         case .nook: return "Início"
         case .media: return "Mídia"
         case .clipboard: return "Copiados"
+        case .prs: return "PRs"
         case .calendar: return "Agenda"
         case .tray: return "Bandeja"
         case .camera: return "Espelho"
@@ -23,6 +24,7 @@ enum NookTab: String, CaseIterable, Identifiable {
         case .nook: return "rectangle.topthird.inset.filled"
         case .media: return "play.fill"
         case .clipboard: return "doc.on.clipboard.fill"
+        case .prs: return "arrow.triangle.pull"
         case .calendar: return "calendar"
         case .tray: return "tray.fill"
         case .camera: return "camera.fill"
@@ -35,7 +37,7 @@ enum NookTab: String, CaseIterable, Identifiable {
 
 /// O que aparece nas "asas" do notch fechado.
 enum ClosedActivity: Equatable {
-    case none, music, timer, claude, meeting, alert
+    case none, music, timer, claude, meeting, download, alert
 }
 
 final class NotchViewModel: ObservableObject {
@@ -69,6 +71,7 @@ final class NotchViewModel: ObservableObject {
         case .none: return 0
         case .alert: return 128
         case .meeting: return 78
+        case .download: return 72
         default: return notchSize.height + 16
         }
     }
@@ -113,5 +116,5 @@ final class NotchViewModel: ObservableObject {
     }
 
     /// Largura aproximada da barra de abas (para a área de hover).
-    let tabBarWidthEstimate: CGFloat = 500
+    let tabBarWidthEstimate: CGFloat = 560
 }

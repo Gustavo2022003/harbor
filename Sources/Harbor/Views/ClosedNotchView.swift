@@ -8,6 +8,7 @@ struct ClosedNotchView: View {
     @EnvironmentObject var alerts: AlertCenter
     @EnvironmentObject var claude: ClaudeActivity
     @EnvironmentObject var calendar: CalendarStore
+    @EnvironmentObject var downloads: DownloadsMonitor
     @AppStorage(Prefs.showVisualizer) private var showVisualizer = true
 
     var body: some View {
@@ -93,6 +94,26 @@ struct ClosedNotchView: View {
                         .fixedSize()
                 }
                 .frame(width: wing, alignment: .center)
+            case .download:
+                let d = downloads.active
+                DownloadRing(fraction: d?.fraction)
+                    .frame(width: 18, height: 18)
+                    .frame(width: wing, alignment: .center)
+                Spacer(minLength: 0)
+                Group {
+                    if let f = d?.fraction {
+                        Text("\(Int(f * 100))%")
+                    } else {
+                        Text(DownloadsMonitor.format(bytes: d?.bytes ?? 0))
+                    }
+                }
+                .font(.system(size: 11.5, weight: .bold, design: .rounded))
+                .monospacedDigit()
+                .foregroundStyle(Color(red: 0.4, green: 0.75, blue: 1))
+                .contentTransition(.numericText())
+                .fixedSize()
+                .frame(width: wing, alignment: .center)
+                .help(d.map { "\($0.name) · \(DownloadsMonitor.format(bytes: Int64($0.speed)))/s" } ?? "")
             case .none:
                 Spacer(minLength: 0)
             }
@@ -292,10 +313,14 @@ struct OdometerBubble: View {
 struct PinnedAppBubbles: View {
     @EnvironmentObject var pins: AppPinStore
     @EnvironmentObject var vm: NotchViewModel
+    @EnvironmentObject var mic: MicController
 
     var body: some View {
         let h = max(18, vm.notchSize.height - 6)
         HStack(spacing: 5) {
+            if mic.isMuted || mic.inUse {
+                MicBubble(height: h).transition(.scale(scale: 0.3).combined(with: .opacity))
+            }
             ForEach(pins.visible) { app in
                 PinnedAppBubble(app: app, height: h)
                     .transition(.scale(scale: 0.3).combined(with: .opacity))
@@ -326,15 +351,85 @@ struct PinnedAppBubble: View {
                 .frame(width: height + 6, height: height)
                 .background(Capsule().fill(Color.black))
                 .overlay(Capsule().strokeBorder(Color.white.opacity(hover ? 0.25 : 0.07)))
+                .overlay(alignment: .topTrailing) {
+                    if let badge = pins.badges[app.bundleID] {
+                        Text(badge.count > 3 ? "99+" : badge)
+                            .font(.system(size: 8.5, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 3.5)
+                            .frame(minWidth: 13, minHeight: 13)
+                            .background(Capsule().fill(Color.red))
+                            .overlay(Capsule().strokeBorder(Color.black, lineWidth: 1.5))
+                            .offset(x: 4, y: -3)
+                            .transition(.scale.combined(with: .opacity))
+                    }
+                }
+                .animation(.spring(response: 0.35, dampingFraction: 0.6), value: pins.badges[app.bundleID])
                 .scaleEffect(hover ? 1.12 : 1)
                 .contentShape(Capsule())
         }
         .buttonStyle(PressableStyle())
         .onHover { h in withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { hover = h } }
-        .help("Ir para \(app.name)")
+        .help("Ir para \(app.name)" + (pins.badges[app.bundleID].map { " · \($0) não lidas" } ?? ""))
         .contextMenu {
             Button("Ir para \(app.name)") { pins.activate(app.bundleID) }
             Button("Desafixar \(app.name)") { withAnimation { pins.unpin(app.bundleID) } }
+        }
+    }
+}
+
+/// Bolha do microfone: laranja quando em uso, vermelha quando no mudo. Clique alterna o mudo.
+struct MicBubble: View {
+    @EnvironmentObject var mic: MicController
+    let height: CGFloat
+    @Local private var hover = false
+
+    var body: some View {
+        let tint: Color = mic.isMuted ? .red : Theme.orange
+        Button { mic.toggle() } label: {
+            HStack(spacing: 4) {
+                Image(systemName: mic.isMuted ? "mic.slash.fill" : "mic.fill")
+                    .font(.system(size: 11, weight: .bold))
+                    .contentTransition(.symbolEffect(.replace))
+                if mic.isMuted {
+                    Text("Mudo").font(.system(size: 10.5, weight: .bold, design: .rounded))
+                }
+            }
+            .foregroundStyle(tint)
+            .padding(.horizontal, 9)
+            .frame(height: height)
+            .background(Capsule().fill(Color.black))
+            .overlay(Capsule().strokeBorder(tint.opacity(hover ? 0.8 : 0.45)))
+            .scaleEffect(hover ? 1.08 : 1)
+            .contentShape(Capsule())
+        }
+        .buttonStyle(PressableStyle())
+        .onHover { h in withAnimation(.spring(response: 0.25, dampingFraction: 0.6)) { hover = h } }
+        .help(mic.isMuted ? "Microfone mudo — clique para ativar (⌥M)" : "Microfone em uso — clique para mutar (⌥M)")
+    }
+}
+
+/// Anel de progresso do download (gira quando o total é desconhecido).
+struct DownloadRing: View {
+    var fraction: Double?
+    private let tint = Color(red: 0.4, green: 0.75, blue: 1)
+
+    var body: some View {
+        ZStack {
+            Circle().stroke(tint.opacity(0.25), lineWidth: 2.5)
+            if let fraction {
+                Circle().trim(from: 0, to: max(0.03, fraction))
+                    .stroke(tint, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                    .animation(.snappy, value: fraction)
+            } else {
+                TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { ctx in
+                    Circle().trim(from: 0, to: 0.3)
+                        .stroke(tint, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                        .rotationEffect(.degrees(ctx.date.timeIntervalSinceReferenceDate * 360))
+                }
+            }
+            Image(systemName: "arrow.down").font(.system(size: 8, weight: .heavy)).foregroundStyle(tint)
         }
     }
 }
