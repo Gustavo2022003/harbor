@@ -1,11 +1,15 @@
 import SwiftUI
 
 enum NookTab: String, CaseIterable, Identifiable {
-    case nook, media, clipboard, prs, calendar, tray, camera, odometer, tools, settings
+    case live, nook, media, clipboard, prs, calendar, tray, camera, odometer, tools, settings
     var id: String { rawValue }
+
+    /// Aba temporária: só existe enquanto há algo em execução.
+    var isTemporary: Bool { self == .live }
 
     var title: String {
         switch self {
+        case .live: return "Agora"
         case .nook: return "Início"
         case .media: return "Mídia"
         case .clipboard: return "Copiados"
@@ -21,6 +25,7 @@ enum NookTab: String, CaseIterable, Identifiable {
 
     var icon: String {
         switch self {
+        case .live: return "dot.radiowaves.left.and.right"
         case .nook: return "rectangle.topthird.inset.filled"
         case .media: return "play.fill"
         case .clipboard: return "doc.on.clipboard.fill"
@@ -35,6 +40,11 @@ enum NookTab: String, CaseIterable, Identifiable {
     }
 }
 
+/// Atividades em execução que ganham um cartão na aba temporária "Agora".
+enum LiveKind: Equatable {
+    case claude, download, timer, meeting
+}
+
 /// O que aparece nas "asas" do notch fechado.
 enum ClosedActivity: Equatable {
     case none, music, timer, claude, meeting, download, alert
@@ -42,13 +52,27 @@ enum ClosedActivity: Equatable {
 
 final class NotchViewModel: ObservableObject {
     @Published var isOpen = false
-    @Published var tab: NookTab = .nook
+    @Published var tab: NookTab = .nook {
+        willSet {
+            // Lembra onde o usuário estava para voltar quando a aba temporária "Agora" fechar
+            if newValue == .live && tab != .live { tabBeforeLive = tab == .camera ? .nook : tab }
+        }
+    }
     @Published var notchSize = CGSize(width: 185, height: 32)
     @Published var closedActivity: ClosedActivity = .none
     /// Mantém o notch aberto mesmo com o mouse fora (ex.: digitando uma tarefa).
     @Published var keepOpen = false
     /// Recolhido para dentro do notch (tela cheia / troca de tela / entrada do app).
     @Published var retracted = false
+    /// O que está em execução agora (ordem de exibição). Vazio → a aba "Agora" some.
+    @Published var live: [LiveKind] = []
+    /// Aba em que o usuário estava antes de a aba "Agora" abrir sozinha.
+    var tabBeforeLive: NookTab = .nook
+
+    /// Abas mostradas na barra (a temporária só enquanto há algo rodando).
+    var visibleTabs: [NookTab] {
+        NookTab.allCases.filter { !$0.isTemporary || !live.isEmpty }
+    }
 
     /// Tamanho da área de conteúdo quando aberto (abaixo da faixa do notch).
     let openContentSize = CGSize(width: 960, height: 150)
@@ -72,6 +96,8 @@ final class NotchViewModel: ObservableObject {
         case .alert: return 128
         case .meeting: return 78
         case .download: return 72
+        // "12m05s" não cabe na asa padrão: alarga para o tempo não encostar na borda
+        case .claude: return 70
         default: return notchSize.height + 16
         }
     }

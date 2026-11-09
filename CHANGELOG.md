@@ -4,6 +4,16 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-09
+
+### Adicionado
+- Aba temporária **Agora**: aparece na barra de abas só enquanto algo está em execução (Claude Code, download, timer, reunião próxima) e abre sozinha ao passar o mouse no notch com uma atividade. Mostra os detalhes de cada uma: pedido, ferramenta em uso e última mensagem do Claude; progresso, velocidade e tempo restante dos downloads; controles do timer; botão de entrar na reunião. As outras abas continuam ao lado; ao fechar, o notch volta para a aba em que você estava.
+
+### Corrigido
+- Eventos do Claude Code iam parar em outra cópia do app (a do teste do CI), que abria e fechava, e o notch deixava de mostrar o Claude. O hook agora entrega os eventos ao Harbor que está aberto (`~/.harbor/app-path`; o script é atualizado sozinho ao abrir o app), e a cópia do CI não reivindica mais o `harbor://` e é removida depois do teste.
+- Tempo do Claude encostando na borda do notch fechado (asa mais larga).
+- O aviso de ociosidade do Claude não deixa mais um cartão "Esperando você" preso.
+
 ## [2.2.0] - 2026-11-08
 
 ### Adicionado

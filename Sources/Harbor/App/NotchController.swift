@@ -178,6 +178,9 @@ final class NotchController {
         let states: [(String, Bool, NookTab)] = NookTab.allCases.map { ($0.rawValue, true, $0) }
             .map { $0.0 == "nook" ? ("nook", true, NookTab.nook) : $0 }
         let all = [("closed", false, NookTab.nook)] + states
+        // Sessão fictícia do Claude para a aba temporária "Agora" aparecer nas capturas
+        claude.injectDemo()
+        vm.live = computeLive()
         func shoot(_ idx: Int) {
             guard idx < all.count else { NSApp.terminate(nil); return }
             let (name, open, tab) = all[idx]
@@ -315,6 +318,32 @@ final class NotchController {
         return .none
     }
 
+    /// Atividades em execução, na ordem dos cartões da aba "Agora".
+    private func computeLive() -> [LiveKind] {
+        var live: [LiveKind] = []
+        if let m = calendar.nextMeeting, m.start.timeIntervalSinceNow < 10 * 60 { live.append(.meeting) }
+        if !claude.liveSessions.isEmpty { live.append(.claude) }
+        if !downloads.items.isEmpty { live.append(.download) }
+        if timer.isActive { live.append(.timer) }
+        return live
+    }
+
+    private func updateLive() {
+        let live = computeLive()
+        guard live != vm.live else { return }
+        withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) {
+            vm.live = live
+            // Acabou tudo com a aba "Agora" na tela: volta para a aba anterior
+            if live.isEmpty && vm.tab == .live { vm.tab = vm.tabBeforeLive }
+        }
+    }
+
+    /// Ao passar o mouse com algo em execução no notch fechado, abre direto na aba "Agora".
+    private var hoverTab: NookTab? {
+        guard !vm.live.isEmpty, vm.closedActivity != .none, vm.closedActivity != .music else { return nil }
+        return .live
+    }
+
     private func periodicChecks() {
         // Visualizador real: liga/desliga captura de áudio
         audio.update(musicPlaying: media.info?.isPlaying == true)
@@ -413,6 +442,7 @@ final class NotchController {
             if act != vm.closedActivity {
                 withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { vm.closedActivity = act }
             }
+            updateLive()
         }
         if tick % 30 == 0 { periodicChecks() }
         if hiddenForFullscreen || transitioning || vm.retracted { return }
@@ -445,8 +475,8 @@ final class NotchController {
                 }
                 if hoverStart == nil { hoverStart = Date() }
                 if !down, Date().timeIntervalSince(hoverStart!) >= openDelay {
-                    // Com reunião próxima, abre direto na Agenda
-                    open(tab: vm.closedActivity == .meeting ? .calendar : nil)
+                    // Com algo em execução (Claude, download, timer, reunião), abre na aba temporária "Agora"
+                    open(tab: hoverTab)
                 }
             } else {
                 hoverStart = nil
@@ -509,10 +539,11 @@ final class NotchController {
             guard let self else { return }
             self.hoverStart = nil
             // A aba Espelho não "gruda": ao sair com o mouse, a próxima abertura volta para a primeira aba.
-            if !self.vm.isOpen && self.vm.tab == .camera {
+            if !self.vm.isOpen && (self.vm.tab == .camera || self.vm.tab == .live) {
                 var t = Transaction()
                 t.disablesAnimations = true
-                withTransaction(t) { self.vm.tab = .nook }
+                // A aba "Agora" é temporária: ao fechar, volta para a aba em que o usuário estava.
+                withTransaction(t) { self.vm.tab = self.vm.tab == .live ? self.vm.tabBeforeLive : .nook }
             }
         }
         if wasKey {
