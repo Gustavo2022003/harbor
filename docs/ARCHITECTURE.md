@@ -71,4 +71,4 @@ O island só se recolhe quando o app da atividade mostrada (`islandSourceApps()`
 - Shaders Metal são compilados em tempo de execução (`device.makeLibrary(source:)`).
 - Depuração visual: `build/Harbor.app/Contents/MacOS/Harbor --snapshot <pasta>` gera um PNG de cada aba, mais `closed` e `closed-music` (música com o selo do Claude). O modo usa uma sessão fictícia do Claude.
 - Teste da atualização: `Harbor --update-now` procura e instala sem clique (use numa cópia com versão menor).
-- Uma cópia do app que não deve receber eventos (CI, testes) precisa ficar sem `CFBundleURLTypes`, ou o macOS pode entregar o `harbor://` para ela.
+- Uma cópia do app que não deve receber eventos (CI, testes) precisa ficar sem `CFBundleURLTypes`, ou o macOS pode entregar o `harbor://` para ela. Ela também precisa de outro `CFBundleIdentifier` (o CI usa `com.gustavo.harbor.ci`): com o mesmo id e outra assinatura, uma permissão aprovada para a cópia substitui a do app real no TCC.

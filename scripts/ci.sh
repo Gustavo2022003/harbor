@@ -65,6 +65,9 @@ if [[ $QUICK -eq 0 && $FAILS -eq 0 ]]; then
   /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string AppIcon" "$APP/Contents/Info.plist" 2>/dev/null || true
   # A cópia de teste não pode reivindicar o esquema harbor:// (roubaria os eventos do Claude do app de verdade)
   /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "$APP/Contents/Info.plist" 2>/dev/null || true
+  # Identificador próprio: com o mesmo do app real, um pedido de permissão aprovado para a cópia (ad-hoc)
+  # sobrescreve as permissões do Harbor no TCC (Acessibilidade, Gravação de Tela…) e o app real as perde.
+  /usr/libexec/PlistBuddy -c "Set :CFBundleIdentifier com.gustavo.harbor.ci" "$APP/Contents/Info.plist"
   codesign --force --sign - "$APP" 2>/dev/null   # ad-hoc: não toca nas Chaves
 
   "$APP/Contents/MacOS/Harbor" --snapshot "$PWD/$SHOTS" >"$OUT/smoke.log" 2>&1 &

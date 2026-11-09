@@ -261,6 +261,7 @@ Leva cerca de 30 s. Num push que não mexe em código (só docs, por exemplo), o
 | Permissão dada, mas não funciona | Em Ajustes do Sistema › Privacidade, remova o Harbor (−) e adicione de novo. Depois de usar o `make signing`, isso deixa de acontecer. |
 | `codesign` trava ao compilar | O macOS está pedindo acesso à chave "Harbor Dev": clique em **Sempre Permitir**. |
 | Música não aparece | Permita a Automação do Spotify ou do Música em Ajustes do Sistema › Privacidade › Automação. |
+| Aviso nativo de volume/brilho aparecendo junto com o do Harbor | A permissão de Acessibilidade se perdeu. Rode `tccutil reset Accessibility com.gustavo.harbor`, reabra o Harbor e clique em **Permitir Acessibilidade** em Ajustes › Integrações. Faça o mesmo com `ScreenCapture` e `Calendar`, se o vidro ou a agenda pararem. |
 | Aba PRs mostra um erro | Rode `gh auth status` e, se precisar, `gh auth login`. |
 | "Não foi possível atualizar" em Ajustes › Sobre | Rode `gh auth status`. Se o Harbor estiver numa pasta sem permissão de escrita, mova-o para Aplicativos. |
 | Claude não aparece no notch | Abra o Harbor uma vez (isso atualiza `~/.harbor/app-path`) e confira os hooks em Ajustes › Integrações. Detalhes: `log show --last 5m --predicate 'subsystem == "com.gustavo.harbor"'`. |

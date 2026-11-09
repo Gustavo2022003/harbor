@@ -624,7 +624,7 @@ const runhead = ch => `<div class="run"><img src="${ICON}"><span>Manual do Harbo
     <tr><td>O app não abre (“não pode ser aberto”)</td><td>Libere a primeira abertura (capítulo 01, passo 3).</td></tr>
     <tr><td>Dei a permissão, mas não funciona</td><td>Remova o Harbor da lista com <b>−</b>, adicione de novo com <b>+</b> e reabra o app.</td></tr>
     <tr><td>A música não aparece</td><td>Em <span class="path">Privacidade e Segurança<i>›</i>Automação</span>, ligue o Spotify e o Música abaixo do Harbor.</td></tr>
-    <tr><td>O aviso nativo de volume continua aparecendo</td><td>Confira se a Acessibilidade está ativa e reabra o Harbor (capítulo 03).</td></tr>
+    <tr><td>O aviso nativo de volume continua aparecendo</td><td>Confira se a Acessibilidade está ativa e reabra o Harbor (capítulo 03). Se continuar, rode <code>tccutil reset Accessibility com.gustavo.harbor</code>, reabra o Harbor e clique em <span class="ui">Permitir Acessibilidade</span> em <span class="path">Ajustes<i>›</i>Integrações</span>.</td></tr>
     <tr><td>O vidro ficou só desfocado, sem refração</td><td>Falta a Gravação de Tela, ou o app ainda não foi reaberto (capítulo 04).</td></tr>
     <tr><td>A aba PRs mostra um erro</td><td>Rode <code>gh auth status</code>. Se precisar, rode <code>gh auth login</code> (capítulo 06).</td></tr>
     <tr><td>PRs da empresa não aparecem</td><td>Autorize o GitHub CLI no SSO da organização (capítulo 06).</td></tr>
