@@ -23,6 +23,7 @@ struct SettingsTabView: View {
     @AppStorage(Prefs.screenMode) private var screenMode = ScreenMode.notch.rawValue
     @AppStorage(Prefs.hideInFullscreen) private var hideInFullscreen = true
     @AppStorage(Prefs.liveGlow) private var liveGlow = true
+    @AppStorage(Prefs.reopenLastTab) private var reopenLastTab = false
     @AppStorage(AlertPrefs.volume) private var alertVolume = true
     @AppStorage(AlertPrefs.brightness) private var alertBrightness = true
     @AppStorage(AlertPrefs.power) private var alertPower = true
@@ -128,6 +129,8 @@ struct SettingsTabView: View {
                 }
             Toggle("Feedback háptico ao abrir", isOn: $haptics)
             Toggle("Visualizador no notch fechado", isOn: $showVisualizer)
+            Toggle("Reabrir na última aba", isOn: $reopenLastTab)
+                .help("Ligado: o notch abre na aba em que você parou. Desligado: abre sempre no Início (ou na aba Agora, se algo estiver rodando).")
             HStack(spacing: 6) {
                 Text("Abrir após").foregroundStyle(Theme.secondary)
                 Slider(value: $openDelay, in: 0...1, step: 0.05).tint(Theme.orange)
@@ -368,12 +371,14 @@ struct SettingsTabView: View {
             }
             .frame(width: 118)
             ModuleDivider()
+            UpdateColumn().frame(width: 190, alignment: .leading)
+            ModuleDivider()
             VStack(alignment: .leading, spacing: 6) {
                 sectionTitle("Links")
                 LazyVGrid(columns: [GridItem(.flexible(), spacing: 8), GridItem(.flexible(), spacing: 8)], spacing: 8) {
                     linkCard("Repositório oficial", "Código, releases e documentação", "chevron.left.forwardslash.chevron.right", HarborLinks.repo)
                     linkCard("Enviar feedback", "Ideias, sugestões e elogios", "bubble.left.and.text.bubble.right.fill", HarborLinks.feedback)
-                    linkCard("Reportar um problema", "Já vai com a versão do app e do macOS", "ladybug.fill", HarborLinks.bugWithContext)
+                    linkCard("Reportar bug", "Já vai com a versão do app e do macOS", "ladybug.fill", HarborLinks.bugWithContext)
                     linkCard("Manual (PDF)", "Passo a passo das configurações", "book.fill", HarborLinks.manual)
                 }
             }
@@ -388,7 +393,7 @@ struct SettingsTabView: View {
                     .frame(width: 28, height: 28)
                     .background(Circle().fill(Theme.orange.opacity(0.16)))
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(title).font(.system(size: 12, weight: .semibold))
+                    Text(title).font(.system(size: 12, weight: .semibold)).lineLimit(1)
                     Text(sub).font(.system(size: 10)).foregroundStyle(Theme.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 0)
@@ -413,7 +418,8 @@ struct SettingsTabView: View {
                     chip(m.title, selected: screenMode == m.rawValue, accent: false) { screenMode = m.rawValue }
                 }
             }
-            Toggle("Ocultar em tela cheia", isOn: $hideInFullscreen)
+            Toggle("Recolher em tela cheia", isOn: $hideInFullscreen)
+                .help("O island só se recolhe quando o app do que ele mostra (ex.: Spotify tocando, terminal do Claude) está em tela cheia na frente.")
             Toggle("Brilho vivo com música", isOn: $liveGlow)
         }
         .toggleStyle(.switch).controlSize(.mini).font(.system(size: 12))
@@ -430,7 +436,8 @@ struct SettingsTabView: View {
             Toggle("Volume", isOn: $alertVolume)
             Toggle("Brilho", isOn: $alertBrightness)
             Toggle("Bateria e carregador", isOn: $alertPower)
-            Toggle("Fones Bluetooth", isOn: $alertBluetooth)
+            Toggle("Aparelhos Bluetooth", isOn: $alertBluetooth)
+                .help("Aviso quando um aparelho conecta/desconecta e quando a bateria cai abaixo de 20% e 10%.")
         }
         .toggleStyle(.switch).controlSize(.mini).font(.system(size: 12))
     }
@@ -438,9 +445,9 @@ struct SettingsTabView: View {
     // MARK: Geral › Atalhos
 
     private var shortcutsColumn: some View {
-        VStack(alignment: .leading, spacing: 6) {
+        VStack(alignment: .leading, spacing: 4) {
             sectionTitle("Atalhos")
-            LazyVGrid(columns: [GridItem(.flexible(), spacing: 12), GridItem(.flexible())], alignment: .leading, spacing: 5) {
+            VStack(alignment: .leading, spacing: 1.5) {
                 shortcutRow("Abrir", HotKeys.toggle.label)
                 shortcutRow("Cópias", HotKeys.clipboard.label)
                 shortcutRow("Nota", HotKeys.note.label)
@@ -455,10 +462,12 @@ struct SettingsTabView: View {
     private func shortcutRow(_ title: String, _ keys: String) -> some View {
         HStack {
             Text(title).font(.system(size: 11.5)).foregroundStyle(Color.white.opacity(0.85))
+                .lineLimit(1)
             Spacer(minLength: 4)
             Text(keys)
                 .font(.system(size: 10.5, weight: .semibold, design: .rounded))
-                .padding(.horizontal, 6).frame(height: 18)
+                .fixedSize()
+                .padding(.horizontal, 6).frame(height: 15.5)
                 .background(RoundedRectangle(cornerRadius: 5).fill(Color.white.opacity(0.1)))
         }
     }
@@ -625,5 +634,74 @@ struct SettingsTabView: View {
 
     private func sectionTitle(_ t: String) -> some View {
         Text(t).font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.orange)
+    }
+}
+
+// MARK: - Sobre › Atualizações
+
+struct UpdateColumn: View {
+    @EnvironmentObject var updater: Updater
+    @AppStorage(Updater.autoCheckKey) private var autoCheck = true
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            Text("Atualizações").font(.system(size: 12, weight: .bold)).foregroundStyle(Theme.orange)
+            HStack(spacing: 6) {
+                icon
+                Text(status).font(.system(size: 11.5, weight: .semibold)).lineLimit(2)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            if case .failed(let msg) = updater.state {
+                Text(msg).font(.system(size: 10)).foregroundStyle(.red.opacity(0.9)).lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            } else if let c = updater.lastCheck {
+                Text("Verificado às \(c.formatted(date: .omitted, time: .shortened))")
+                    .font(.system(size: 10)).foregroundStyle(Theme.secondary)
+            }
+            Spacer(minLength: 0)
+            HStack(spacing: 6) {
+                if case .available(let v) = updater.state {
+                    Button("Atualizar para v\(v)") { updater.install() }
+                        .buttonStyle(PillButtonStyle(tint: Theme.orange))
+                    if let page = updater.latest?.page {
+                        Button { NSWorkspace.shared.open(page) } label: { Image(systemName: "doc.text") }
+                            .buttonStyle(.plain).foregroundStyle(Theme.secondary).help("Ver novidades da release")
+                    }
+                } else {
+                    Button(updater.isBusy ? "Aguarde…" : "Procurar agora") { updater.check() }
+                        .buttonStyle(PillButtonStyle(tint: .white))
+                        .disabled(updater.isBusy)
+                }
+            }
+            Toggle("Procurar sozinho", isOn: $autoCheck)
+                .toggleStyle(.switch).controlSize(.mini).font(.system(size: 11))
+        }
+    }
+
+    private var status: String {
+        switch updater.state {
+        case .idle: return "Versão atual: v\(updater.current)"
+        case .checking: return "Procurando…"
+        case .upToDate: return "Você está na última versão (v\(updater.current))"
+        case .available(let v): return "Nova versão: v\(v) (você tem v\(updater.current))"
+        case .downloading: return "Baixando e conferindo a assinatura…"
+        case .installing: return "Instalando — o Harbor vai reabrir"
+        case .failed: return "Não foi possível atualizar"
+        }
+    }
+
+    @ViewBuilder private var icon: some View {
+        switch updater.state {
+        case .checking, .downloading, .installing:
+            ProgressView().controlSize(.mini)
+        case .upToDate:
+            Image(systemName: "checkmark.seal.fill").foregroundStyle(Theme.green)
+        case .available:
+            Image(systemName: "arrow.down.app.fill").foregroundStyle(Theme.orange)
+        case .failed:
+            Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(.red)
+        case .idle:
+            Image(systemName: "arrow.triangle.2.circlepath").foregroundStyle(Theme.secondary)
+        }
     }
 }

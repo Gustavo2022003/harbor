@@ -66,6 +66,10 @@ final class NotchViewModel: ObservableObject {
     @Published var retracted = false
     /// O que está em execução agora (ordem de exibição). Vazio → a aba "Agora" some.
     @Published var live: [LiveKind] = []
+    /// Música tocando com o som saindo por um aparelho Bluetooth (ícone na asa).
+    @Published var musicOnBluetooth = false
+    /// Claude trabalhando enquanto a música ocupa as asas (selo na capa).
+    @Published var claudeBehindMusic = false
     /// Aba em que o usuário estava antes de a aba "Agora" abrir sozinha.
     var tabBeforeLive: NookTab = .nook
 
@@ -80,6 +84,8 @@ final class NotchViewModel: ObservableObject {
     let tabBarSpacing: CGFloat = 8
 
     var makeKey: (() -> Void)?
+    /// Abre o island numa aba (ex.: clique numa bolha).
+    var openTab: ((NookTab) -> Void)?
 
     /// Bolha ao lado do island (ex.: odômetro fixado).
     let bubbleGap: CGFloat = 6
@@ -98,6 +104,10 @@ final class NotchViewModel: ObservableObject {
         case .download: return 72
         // "12m05s" não cabe na asa padrão: alarga para o tempo não encostar na borda
         case .claude: return 70
+        case .music:
+            // capa + quadrado do Claude lado a lado (com margem até a borda) quando ele trabalha por trás
+            let base = notchSize.height + 16 + (musicOnBluetooth ? 16 : 0)
+            return claudeBehindMusic ? max(base, (notchSize.height - 10) * 2 + 5 + 22) : base
         default: return notchSize.height + 16
         }
     }

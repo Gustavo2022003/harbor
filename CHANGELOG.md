@@ -4,6 +4,27 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 
 ## [Unreleased]
 
+## [2.4.0] - 2026-11-09
+
+### Adicionado
+- Ajuste **Reabrir na última aba** (Ajustes › Geral, desligado por padrão). Desligado, o notch sempre abre no Início, ou na aba **Agora** quando algo está rodando. Ligado, volta para a aba em que você parou.
+- **Atualização pelo próprio app**: Ajustes › Sobre › Atualizações compara a versão instalada com a última release do GitHub e, se houver uma mais nova, o botão **Atualizar para vX** baixa o `.zip`, confere se foi assinado pelo mesmo certificado do app atual, troca o app antigo pelo novo e reabre o Harbor. Procura sozinho ao abrir e a cada 6 h (aviso no notch uma vez por versão) e pelo menu da âncora › **Procurar atualizações…**. Usa o `gh` CLI, porque o repositório é privado.
+- **Bluetooth no island**:
+  - **Fone na asa da música**: com música tocando e o som saindo por Bluetooth, um ícone de fone/AirPods aparece junto do visualizador.
+  - **Aviso de bateria fraca** em 20% e 10% para qualquer aparelho Bluetooth (fones, teclado, mouse).
+  - **Cartão de aparelhos** na aba Ferramentas: todos os aparelhos conectados com a bateria de cada um (esquerdo/direito/estojo nos AirPods) e qual está tocando o som.
+  - A bateria vem do `system_profiler`, então funciona também com fones de outras marcas.
+- Skill **`/release`** do Claude Code (`.claude/skills/release/`): checklist completo de release (versão, CHANGELOG, README, manual, ARCHITECTURE, CI e publicação).
+
+### Documentação
+- README, manual em PDF, ARCHITECTURE e CONTRIBUTING atualizados: aba Agora, atualizações, Bluetooth, comportamento em tela cheia e solução de problemas do hook e da atualização.
+
+### Alterado
+- **Música tem prioridade sobre o Claude** nas asas do notch fechado. Com os dois ativos, o selo do Claude girando aparece ao lado da capa, do mesmo tamanho, e o hover abre a aba **Agora** para ver o que ele está fazendo.
+- Ajustes › Geral: atalhos em uma coluna (antes ficavam cortados); "Fones Bluetooth" virou **Aparelhos Bluetooth** (conexão e bateria fraca).
+- O island fica fixo ao trocar de Space e com outros apps em tela cheia. Ele só se recolhe quando o app da atividade que está mostrando (o Spotify/Música tocando, ou o terminal onde o Claude está trabalhando) está em tela cheia na frente. A troca tem um pequeno debounce para não piscar durante a animação do Space. O ajuste passou a se chamar **Recolher em tela cheia**.
+- O hook do Claude informa em qual app ele roda (Terminal, iTerm, VS Code…); o script em `~/.harbor/` é atualizado sozinho.
+
 ## [2.3.0] - 2026-11-09
 
 ### Adicionado

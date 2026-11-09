@@ -24,6 +24,8 @@ final class NotchController {
     let downloads = DownloadsMonitor()
     let github = GitHubStatus()
     let spotify = SpotifyAPI()
+    let bluetooth = BluetoothMonitor()
+    let updater = Updater()
 
     private var panel: NotchPanel!
     private var screen: NSScreen!
@@ -38,6 +40,9 @@ final class NotchController {
     private var sticky = false
     private var pinnedAt = Date()
     private var hiddenForFullscreen = false
+    /// Debounce do recolher/mostrar em tela cheia (evita sumir e voltar durante a troca de Space).
+    private var pendingHide: Bool?
+    private var pendingSince = Date()
     /// Durante a troca animada de tela.
     private var transitioning = false
     private var alertedMeetings = Set<String>()
@@ -66,6 +71,10 @@ final class NotchController {
                                          tint: Theme.green), duration: 3.5)
         }
         downloads.start()
+        bluetooth.onAlert = { [weak self] a in self?.alerts.show(a, duration: 4) }
+        bluetooth.start()
+        updater.onAlert = { [weak self] a in self?.alerts.show(a, duration: 5) }
+        updater.start()
         pins.startBadges()
         github.onAlert = { [weak self] a in self?.alerts.show(a, duration: 4) }
         github.start()
@@ -81,6 +90,7 @@ final class NotchController {
         }
 
         vm.makeKey = { [weak self] in self?.panel.makeKey() }
+        vm.openTab = { [weak self] tab in self?.open(tab: tab, pinned: true) }
 
         layout()
         NotificationCenter.default.addObserver(forName: NSApplication.didChangeScreenParametersNotification,
@@ -113,6 +123,13 @@ final class NotchController {
 
         trackTimer = Timer(timeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in self?.track() }
         RunLoop.main.add(trackTimer!, forMode: .common)
+    }
+
+    /// Menu "Procurar atualizações…": verifica e abre Ajustes › Sobre.
+    func checkForUpdates() {
+        UserDefaults.standard.set("about", forKey: "settings.section")
+        updater.check()
+        open(tab: .settings, pinned: true)
     }
 
     func handle(url: URL) {
@@ -177,7 +194,8 @@ final class NotchController {
     private func snapshot(to dir: String) {
         let states: [(String, Bool, NookTab)] = NookTab.allCases.map { ($0.rawValue, true, $0) }
             .map { $0.0 == "nook" ? ("nook", true, NookTab.nook) : $0 }
-        let all = [("closed", false, NookTab.nook)] + states
+        // "closed-music": música nas asas com o Claude trabalhando por trás (selo na capa + fone)
+        let all = [("closed", false, NookTab.nook), ("closed-music", false, NookTab.nook)] + states
         // Sessão fictícia do Claude para a aba temporária "Agora" aparecer nas capturas
         claude.injectDemo()
         vm.live = computeLive()
@@ -186,7 +204,16 @@ final class NotchController {
             let (name, open, tab) = all[idx]
             vm.tab = tab
             vm.isOpen = open
-            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) { self.vm.closedActivity = self.computeActivity() }
+            DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                if name == "closed-music" {
+                    self.vm.closedActivity = .music
+                    self.vm.claudeBehindMusic = true
+                    self.vm.musicOnBluetooth = self.bluetooth.outputIsBluetooth
+                } else {
+                    self.vm.closedActivity = self.computeActivity()
+                    self.vm.claudeBehindMusic = false
+                }
+            }
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.6) {
                 guard let view = self.panel.contentView,
                       let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
@@ -253,6 +280,8 @@ final class NotchController {
                 .environmentObject(downloads)
                 .environmentObject(github)
                 .environmentObject(spotify)
+                .environmentObject(bluetooth)
+                .environmentObject(updater)
             let host = NSHostingView(rootView: root)
             host.sizingOptions = []
             host.frame = NSRect(origin: .zero, size: rect.size)
@@ -312,8 +341,9 @@ final class NotchController {
         if alerts.current != nil { return .alert }
         if let m = calendar.nextMeeting, m.start.timeIntervalSinceNow < 10 * 60 { return .meeting }
         if !downloads.items.isEmpty { return .download }
-        if claude.workingSession != nil { return .claude }
+        // Música tem prioridade sobre o Claude; ele continua indicado na capa e na aba "Agora".
         if media.info?.isPlaying == true { return .music }
+        if claude.workingSession != nil { return .claude }
         if timer.isActive { return .timer }
         return .none
     }
@@ -338,10 +368,9 @@ final class NotchController {
         }
     }
 
-    /// Ao passar o mouse com algo em execução no notch fechado, abre direto na aba "Agora".
+    /// Ao passar o mouse com algo em execução (mesmo com a música na asa), abre direto na aba "Agora".
     private var hoverTab: NookTab? {
-        guard !vm.live.isEmpty, vm.closedActivity != .none, vm.closedActivity != .music else { return nil }
-        return .live
+        vm.live.isEmpty ? nil : .live
     }
 
     private func periodicChecks() {
@@ -367,14 +396,33 @@ final class NotchController {
 
     // MARK: - Animações de saída/entrada
 
-    /// Ocultar quando um app está em tela cheia (o island "é sugado" para o notch).
+    /// Apps de onde vem a atividade que o island mostra agora (a música, o terminal do Claude).
+    private func islandSourceApps() -> Set<String> {
+        // Mesma prioridade das asas do notch fechado (música antes do Claude); ignora avisos passageiros.
+        if media.info?.isPlaying == true { return Set([media.info?.source.bundleID].compactMap { $0 }) }
+        if claude.workingSession != nil {
+            return Set(claude.liveSessions.compactMap(\.appBundleID))
+        }
+        return []
+    }
+
+    /// O island fica fixo; só se recolhe quando o app da atividade que ele mostra está em tela cheia
+    /// e na frente (ex.: Spotify em tela cheia tocando a música do island).
     private func checkFullscreen() {
         guard screen != nil, !transitioning else { return }
-        let hide = UserDefaults.standard.bool(forKey: Prefs.hideInFullscreen) && !vm.isOpen
-            && frontAppIsFullscreen(on: screen)
-        guard hide != hiddenForFullscreen else { return }
-        hiddenForFullscreen = hide
-        setRetracted(hide)
+        var want = false
+        if UserDefaults.standard.bool(forKey: Prefs.hideInFullscreen), !vm.isOpen,
+           let front = NSWorkspace.shared.frontmostApplication?.bundleIdentifier,
+           islandSourceApps().contains(front) {
+            want = frontAppIsFullscreen(on: screen)
+        }
+        guard want != hiddenForFullscreen else { pendingHide = nil; return }
+        // Só muda se o estado se mantiver por um instante (troca de Space passa por estados intermediários)
+        if pendingHide != want { pendingHide = want; pendingSince = Date(); return }
+        guard Date().timeIntervalSince(pendingSince) >= 0.45 else { return }
+        pendingHide = nil
+        hiddenForFullscreen = want
+        setRetracted(want)
     }
 
     /// Recolhe para dentro do notch (ou brota de volta com quique).
@@ -443,8 +491,17 @@ final class NotchController {
                 withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { vm.closedActivity = act }
             }
             updateLive()
+            let onBT = media.info?.isPlaying == true && bluetooth.outputIsBluetooth
+            if onBT != vm.musicOnBluetooth {
+                withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { vm.musicOnBluetooth = onBT }
+            }
+            let claudeBehind = act == .music && claude.workingSession != nil
+            if claudeBehind != vm.claudeBehindMusic {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { vm.claudeBehindMusic = claudeBehind }
+            }
         }
         if tick % 30 == 0 { periodicChecks() }
+        if tick % 10 == 5 { checkFullscreen() }
         if hiddenForFullscreen || transitioning || vm.retracted { return }
 
         let p = NSEvent.mouseLocation
@@ -501,7 +558,14 @@ final class NotchController {
     }
 
     func open(tab: NookTab?, pinned: Bool = false) {
-        if let tab { vm.tab = tab }
+        if let tab {
+            vm.tab = tab
+        } else if !vm.isOpen && !UserDefaults.standard.bool(forKey: Prefs.reopenLastTab) {
+            // Sem "Reabrir na última aba": sempre a primeira aba (ou a "Agora", se algo estiver rodando)
+            var t = Transaction()
+            t.disablesAnimations = true
+            withTransaction(t) { vm.tab = vm.live.isEmpty ? .nook : .live }
+        }
         self.pinned = pinned
         sticky = false
         pinnedAt = Date()
@@ -572,6 +636,7 @@ enum Prefs {
     static let screenMode = "screenMode"
     static let hideInFullscreen = "hideInFullscreen"
     static let liveGlow = "liveGlow"
+    static let reopenLastTab = "reopenLastTab"
 
     static func registerDefaults() {
         UserDefaults.standard.register(defaults: [
@@ -581,6 +646,7 @@ enum Prefs {
             screenMode: ScreenMode.notch.rawValue,
             hideInFullscreen: true,
             liveGlow: true,
+            reopenLastTab: false,
         ])
     }
 }

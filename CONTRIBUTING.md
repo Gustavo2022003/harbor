@@ -46,4 +46,7 @@ Antes de abrir o PR, adicione o que mudou na seção `## [Unreleased]` do `CHANG
 - **major** (`3.0.0`): mudanças que quebram algo, como dados ou preferências.
 
 1. Em `dev`, renomeie `## [Unreleased]` para `## [X.Y.Z] - AAAA-MM-DD` e crie um novo `## [Unreleased]` vazio.
-2. `make release VERSION=X.Y.Z`: mescla em `main`, cria a tag, compila, assina e publica a release (tudo neste Mac).
+2. Atualize a documentação que mudou: README (recursos, abas, permissões, problemas), `docs/ARCHITECTURE.md` e o manual (`docs/manual/src/manual.html`). Depois rode `make docs` para regerar os PDFs e banners.
+3. `make release VERSION=X.Y.Z`: mescla em `main`, cria a tag, compila, assina e publica a release (tudo neste Mac).
+
+No Claude Code, a skill **`/release`** (`.claude/skills/release/SKILL.md`) faz esses passos na ordem e confere cada um.

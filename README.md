@@ -22,19 +22,23 @@ Quando há algo acontecendo, o island cresce para os lados. A prioridade, da mai
 
 | Atividade | O que mostra |
 |---|---|
-| 🔔 **Avisos** | Volume, brilho, carregador, bateria fraca, fones Bluetooth, timer, Claude, PRs, downloads concluídos, microfone |
+| 🔔 **Avisos** | Volume, brilho, carregador, bateria fraca (do Mac e dos aparelhos Bluetooth), fones conectados, timer, Claude, PRs, downloads concluídos, microfone, atualização disponível |
 | 📅 **Reunião** | Contagem regressiva nos 10 minutos antes da reunião |
 | ⬇️ **Download** | Anel de progresso com % ou tamanho |
+| 🎵 **Música** | Capa e visualizador (simulado ou real), com um brilho que pulsa. Com o som no Bluetooth, um ícone de fone aparece ao lado do visualizador. Se o Claude estiver trabalhando ao mesmo tempo, o selo dele gira ao lado da capa |
 | ✳️ **Claude Code** | Asterisco girando e o tempo de trabalho |
-| 🎵 **Música** | Capa e visualizador (simulado ou real), com um brilho que pulsa |
 | ⏱️ **Timer** | Tempo restante do Foco ou da Pausa |
 
 **Bolhas** ao lado do island: microfone (em uso ou no mudo), apps fixados (com badges do Dock) e o odômetro do mouse.
 
 ### Abas (passe o mouse no notch ou aperte ⌥ Espaço)
+Por padrão, o notch abre no **Início**, ou na aba **Agora** quando algo está rodando. Para voltar sempre à aba em que você parou, ligue **Reabrir na última aba** em Ajustes › Geral.
+
+O island fica fixo ao trocar de Space. Ele só se recolhe quando o app da atividade que está mostrando (o Spotify tocando, o terminal do Claude) está em tela cheia na frente.
 
 | Aba | |
 |---|---|
+| **Agora** | Aparece só enquanto algo está rodando. Mostra o pedido, a ferramenta em uso e a última mensagem do Claude, o progresso dos downloads, os controles do timer e o botão de entrar na reunião |
 | **Início** | Música, CPU e bateria, timer Foco/Pausa (régua) e tarefas |
 | **Mídia** | Player completo, ❤️ curtir e a fila do Spotify |
 | **Copiados** | Histórico do ⌘C com busca; clique para colar |
@@ -43,8 +47,8 @@ Quando há algo acontecendo, o island cresce para os lados. A prioridade, da mai
 | **Bandeja** | Arraste arquivos até o notch; envie por AirDrop |
 | **Espelho** | Câmera 1:1, com o island esticado para baixo |
 | **Odômetro** | Distância que o mouse percorre, em metros, pés, ⚽ ou 🍌 |
-| **Ferramentas** | Nota rápida, conta-gotas e monitor de rede |
-| **Ajustes** | Geral, Visual (temas, Liquid Glass), Integrações e Apps fixados |
+| **Ferramentas** | Nota rápida, conta-gotas, monitor de rede e aparelhos Bluetooth com a bateria de cada um |
+| **Ajustes** | Geral, Visual (temas, Liquid Glass), Integrações, Apps fixados e Sobre (links e atualizações) |
 
 <a name="manual"></a>
 <img src="docs/banners/manual.png" width="100%" alt="Manual e tutoriais">
@@ -81,6 +85,14 @@ Ou baixe só o tutorial que precisar:
    xattr -dr com.apple.quarantine /Applications/Harbor.app
    ```
 3. Em **Ajustes › Geral**, ative **Iniciar com o macOS**.
+
+### Atualizações
+A partir da v2.4.0, o Harbor se atualiza sozinho. Em **Ajustes › Sobre › Atualizações** (ou no menu da âncora › **Procurar atualizações…**), ele compara a versão instalada com a última release. Se houver uma mais nova, o botão **Atualizar para vX**:
+1. baixa o `.zip` da release;
+2. confere se o app foi assinado pelo mesmo certificado;
+3. troca o app e reabre o Harbor.
+
+Ele também procura sozinho ao abrir e a cada 6 h. Como o repositório é privado, a busca usa o GitHub CLI (`gh auth login`).
 
 <a name="compilar"></a>
 <img src="docs/banners/compilar.png" width="100%" alt="Compilar a partir do código">
@@ -121,7 +133,7 @@ make run       # compila e abre
 | Gravação de Tela | Liquid Glass com refração e visualizador real | Opcional |
 | Calendários | Agenda e reuniões | Opcional |
 | Câmera | Aba Espelho | Opcional |
-| Bluetooth | Avisos de fones | Opcional |
+| Bluetooth | Avisos de fones, bateria dos aparelhos e ícone de fone na música | Opcional |
 | Pasta Downloads | Downloads ao vivo | Opcional |
 
 O passo a passo de cada permissão está no [tutorial 02](docs/manual/tutoriais/02-permissoes.pdf).
@@ -131,7 +143,9 @@ O passo a passo de cada permissão está no [tutorial 02](docs/manual/tutoriais/
 
 
 ### Claude Code
-Em **Ajustes › Integrações**, clique em **Instalar hooks**. Isso cria `~/.harbor/claude-hook.sh` e adiciona hooks em `~/.claude/settings.json`, com backup em `settings.json.harbor-backup`. Os eventos chegam ao Harbor pelo endereço `harbor://claude`.
+Em **Ajustes › Integrações**, clique em **Instalar hooks**. Isso cria `~/.harbor/claude-hook.sh` e adiciona hooks em `~/.claude/settings.json`, com backup em `settings.json.harbor-backup`.
+
+Os eventos chegam ao Harbor pelo endereço `harbor://claude`, sempre no app que está aberto (o caminho dele fica em `~/.harbor/app-path`). O script se atualiza sozinho quando o app abre. Os detalhes da aba **Agora** (ferramenta em uso, última mensagem) são lidos do transcript da sessão.
 
 📘 [Passo a passo ilustrado](docs/manual/tutoriais/05-claude.pdf)
 
@@ -190,6 +204,7 @@ harbor/
 │   ├── setup-signing.sh       # certificado "Harbor Dev"
 │   └── make-icon.sh / .swift  # ícone gerado por código
 ├── .githooks/pre-push         # chama o scripts/ci.sh
+├── .claude/skills/release/    # skill do Claude Code: checklist completo de release
 ├── docs/
 │   ├── ARCHITECTURE.md
 │   ├── manual/                # Harbor-Manual.pdf, tutoriais/*.pdf e a fonte em src/
@@ -211,10 +226,16 @@ Detalhes técnicos em [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md).
 Commits seguem o Conventional Commits. O fluxo completo está em [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ```bash
-# 1. em dev: mova as notas de "Unreleased" para "## [2.2.0] - AAAA-MM-DD" no CHANGELOG
+# 1. em dev: mova as notas de "Unreleased" para "## [2.4.0] - AAAA-MM-DD" no CHANGELOG
 # 2. publique:
-make release VERSION=2.2.0   # merge dev → main, tag, compila, assina e publica no GitHub Releases
+make release VERSION=2.4.0   # merge dev → main, tag, compila, assina e publica no GitHub Releases
 ```
+
+No Claude Code, a skill **`/release`** (`.claude/skills/release/SKILL.md`) faz o checklist inteiro:
+- escolhe a versão pelo CHANGELOG;
+- atualiza o README, o manual, a ARCHITECTURE e o CONTRIBUTING;
+- regera os PDFs e banners;
+- roda o CI, faz commit e publica.
 
 As releases são compiladas e assinadas neste Mac, com o certificado "Harbor Dev". O projeto não usa GitHub Actions.
 
@@ -241,6 +262,8 @@ Leva cerca de 30 s. Num push que não mexe em código (só docs, por exemplo), o
 | `codesign` trava ao compilar | O macOS está pedindo acesso à chave "Harbor Dev": clique em **Sempre Permitir**. |
 | Música não aparece | Permita a Automação do Spotify ou do Música em Ajustes do Sistema › Privacidade › Automação. |
 | Aba PRs mostra um erro | Rode `gh auth status` e, se precisar, `gh auth login`. |
+| "Não foi possível atualizar" em Ajustes › Sobre | Rode `gh auth status`. Se o Harbor estiver numa pasta sem permissão de escrita, mova-o para Aplicativos. |
+| Claude não aparece no notch | Abra o Harbor uma vez (isso atualiza `~/.harbor/app-path`) e confira os hooks em Ajustes › Integrações. Detalhes: `log show --last 5m --predicate 'subsystem == "com.gustavo.harbor"'`. |
 | Captura das abas para depuração | `build/Harbor.app/Contents/MacOS/Harbor --snapshot /tmp/shots` |
 
 ---

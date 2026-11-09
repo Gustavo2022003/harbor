@@ -9,6 +9,7 @@ struct ClosedNotchView: View {
     @EnvironmentObject var claude: ClaudeActivity
     @EnvironmentObject var calendar: CalendarStore
     @EnvironmentObject var downloads: DownloadsMonitor
+    @EnvironmentObject var bluetooth: BluetoothMonitor
     @AppStorage(Prefs.showVisualizer) private var showVisualizer = true
 
     var body: some View {
@@ -18,10 +19,25 @@ struct ClosedNotchView: View {
         HStack(spacing: 0) {
             switch vm.closedActivity {
             case .music:
-                ArtworkView(image: media.artwork, size: h - 10, radius: 6)
-                    .frame(width: wing, alignment: .center)
+                HStack(spacing: 5) {
+                    ArtworkView(image: media.artwork, size: h - 10, radius: 6)
+                    // Claude trabalhando por trás da música: quadrado do tamanho da capa, ao lado dela
+                    if vm.claudeBehindMusic {
+                        ClaudeTile(size: h - 10)
+                            .transition(.scale(scale: 0.3).combined(with: .opacity))
+                            .help("Claude trabalhando — passe o mouse para ver na aba Agora")
+                    }
+                }
+                .frame(width: wing, alignment: .center)
                 Spacer(minLength: 0)
-                Group {
+                HStack(spacing: 4) {
+                    if vm.musicOnBluetooth {
+                        Image(systemName: bluetooth.primaryAudio?.icon ?? "headphones")
+                            .font(.system(size: 10.5, weight: .semibold))
+                            .foregroundStyle(Color.white.opacity(0.75))
+                            .transition(.scale.combined(with: .opacity))
+                            .help("Som saindo em \(bluetooth.outputName)")
+                    }
                     if showVisualizer {
                         AudioVisualizer(isPlaying: media.isPlaying, color: media.accent,
                                         bars: 5, barWidth: 3, spacing: 2, maxHeight: min(22, h - 8))
@@ -31,6 +47,7 @@ struct ClosedNotchView: View {
                     }
                 }
                 .frame(width: wing, alignment: .center)
+                .animation(.spring(response: 0.4, dampingFraction: 0.75), value: vm.musicOnBluetooth)
             case .timer:
                 Image(systemName: timer.mode == .focus ? "timer" : "cup.and.saucer.fill")
                     .font(.system(size: 13, weight: .semibold))
@@ -154,6 +171,23 @@ struct ClaudeSpinner: View {
                 .foregroundStyle(ClaudeActivity.claudeColor)
                 .rotationEffect(.degrees(t * 120))
                 .scaleEffect(1 + 0.12 * sin(t * 4))
+        }
+    }
+}
+
+/// Selo do Claude (asterisco girando num círculo preto com contorno) no tamanho da capa, ao lado dela.
+struct ClaudeTile: View {
+    var size: CGFloat
+    var body: some View {
+        TimelineView(.animation(minimumInterval: 1.0 / 30.0)) { ctx in
+            let t = ctx.date.timeIntervalSinceReferenceDate
+            Image(systemName: "asterisk")
+                .font(.system(size: size * 0.5, weight: .black))
+                .foregroundStyle(ClaudeActivity.claudeColor)
+                .rotationEffect(.degrees(t * 120))
+                .frame(width: size, height: size)
+                .background(Circle().fill(Color.black))
+                .overlay(Circle().strokeBorder(ClaudeActivity.claudeColor.opacity(0.6), lineWidth: 1.5))
         }
     }
 }
