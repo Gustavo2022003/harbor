@@ -63,6 +63,8 @@ if [[ $QUICK -eq 0 && $FAILS -eq 0 ]]; then
   /usr/libexec/PlistBuddy -c "Set :CFBundleShortVersionString $V" "$APP/Contents/Info.plist"
   /usr/libexec/PlistBuddy -c "Set :CFBundleVersion $(git rev-list --count HEAD)" "$APP/Contents/Info.plist"
   /usr/libexec/PlistBuddy -c "Add :CFBundleIconFile string AppIcon" "$APP/Contents/Info.plist" 2>/dev/null || true
+  # A cópia de teste não pode reivindicar o esquema harbor:// (roubaria os eventos do Claude do app de verdade)
+  /usr/libexec/PlistBuddy -c "Delete :CFBundleURLTypes" "$APP/Contents/Info.plist" 2>/dev/null || true
   codesign --force --sign - "$APP" 2>/dev/null   # ad-hoc: não toca nas Chaves
 
   "$APP/Contents/MacOS/Harbor" --snapshot "$PWD/$SHOTS" >"$OUT/smoke.log" 2>&1 &
@@ -79,6 +81,10 @@ if [[ $QUICK -eq 0 && $FAILS -eq 0 ]]; then
     elif [[ "$N" -lt "$EXPECTED" ]]; then bad "renderizou $N de $EXPECTED abas"
     else ok "abriu e renderizou $N abas ($SHOTS)"; fi
   fi
+  # Remove a cópia de teste do LaunchServices e do disco
+  LSREGISTER=/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister
+  [[ -x $LSREGISTER ]] && "$LSREGISTER" -u "$APP" 2>/dev/null || true
+  rm -rf "$APP"
 fi
 
 # ──────────────────────────────────────────────────────────────────────────

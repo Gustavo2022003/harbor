@@ -115,19 +115,26 @@ struct TabBarView: View {
     @EnvironmentObject var vm: NotchViewModel
     @Namespace private var ns
 
+    /// Cor da aba "Agora": a da primeira atividade em execução.
+    private var liveTint: Color { vm.live.first.map(LiveTabView.tint) ?? Theme.orange }
+
     var body: some View {
         HStack(spacing: 2) {
-            ForEach(NookTab.allCases) { tab in
+            ForEach(vm.visibleTabs) { tab in
                 let selected = vm.tab == tab
                 Button {
                     withAnimation(.spring(response: 0.3, dampingFraction: 0.8)) { vm.tab = tab }
                 } label: {
                     HStack(spacing: 6) {
-                        Image(systemName: tab.icon)
-                        if selected { Text(tab.title) }
+                        if tab.isTemporary {
+                            LiveDot(color: liveTint)
+                        } else {
+                            Image(systemName: tab.icon)
+                        }
+                        if selected || tab.isTemporary { Text(tab.title) }
                     }
                     .font(.system(size: 12.5, weight: .semibold))
-                    .foregroundStyle(selected ? Color.white : Color.white.opacity(0.6))
+                    .foregroundStyle(tab.isTemporary ? liveTint : (selected ? Color.white : Color.white.opacity(0.6)))
                     .padding(.horizontal, selected ? 16 : 11)
                     .frame(height: vm.tabBarHeight - 8)
                     .background {
@@ -136,11 +143,18 @@ struct TabBarView: View {
                                 .matchedGeometryEffect(id: "tab", in: ns)
                         }
                     }
+                    .overlay {
+                        if tab.isTemporary && !selected {
+                            Capsule().strokeBorder(liveTint.opacity(0.45))
+                        }
+                    }
                     .contentShape(Capsule())
                 }
                 .buttonStyle(.plain)
+                .transition(.scale(scale: 0.4, anchor: .leading).combined(with: .opacity))
             }
         }
+        .animation(.spring(response: 0.4, dampingFraction: 0.75), value: vm.live)
         .padding(4)
         .frame(height: vm.tabBarHeight)
         .modifier(IslandSurface(shape: Capsule(), glassVisible: true, glassRadius: vm.tabBarHeight / 2))
@@ -158,6 +172,7 @@ struct OpenNotchView: View {
             Color.clear.frame(height: vm.notchSize.height)
             Group {
                 switch vm.tab {
+                case .live: LiveTabView()
                 case .nook: NookHomeView()
                 case .media: MediaTabView()
                 case .clipboard: ClipboardTabView()
