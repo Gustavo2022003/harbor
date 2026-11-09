@@ -293,7 +293,7 @@ const runhead = ch => `<div class="run"><img src="${ICON}"><span>Manual do Harbo
 
   <div class="steps">
     <div class="step"><div><h4>Baixe o instalador</h4>
-      <p>Na página de <b>Releases</b> do repositório, baixe o arquivo <code>Harbor-2.1.0.dmg</code>. Se preferir, o <code>.zip</code> também serve.</p></div></div>
+      <p>Na página de <b>Releases</b> do repositório, baixe o arquivo <code>Harbor-X.Y.Z.dmg</code> mais recente. Se preferir, o <code>.zip</code> também serve. Depois disso, as novas versões se instalam por <span class="path">Ajustes<i>›</i>Sobre<i>›</i>Atualizações</span>.</p></div></div>
 
     <div class="step"><div><div class="row"><div class="txt"><h4>Arraste para Aplicativos</h4>
       <p>Abra o <code>.dmg</code> e arraste o ícone do Harbor até a pasta <b>Aplicativos</b>.</p></div>
@@ -320,7 +320,7 @@ const runhead = ch => `<div class="run"><img src="${ICON}"><span>Manual do Harbo
       </div></div></div>
 
     <div class="step"><div><div class="row"><div class="txt"><h4>Ache o Harbor e ligue a inicialização automática</h4>
-      <p>O Harbor não aparece no Dock. Ele vive no <b>notch</b> e num ícone de <b>âncora ⚓</b> na barra de menus, com <span class="ui">Abrir Harbor</span>, <span class="ui">Ajustes…</span>, <span class="ui">Enviar feedback…</span> e <span class="ui">Sair do Harbor</span>.
+      <p>O Harbor não aparece no Dock. Ele vive no <b>notch</b> e num ícone de <b>âncora ⚓</b> na barra de menus, com <span class="ui">Abrir Harbor</span>, <span class="ui">Ajustes…</span>, <span class="ui">Procurar atualizações…</span>, <span class="ui">Enviar feedback…</span> e <span class="ui">Sair do Harbor</span>.
       Em <span class="path">Ajustes<i>›</i>Geral</span>, ative <span class="ui">Iniciar com o macOS</span>.</p></div>
       <div class="win" style="width:62mm;flex:none"><div style="padding:2.5mm 3.5mm;background:#000;font-size:8pt">
         <div style="color:var(--amber);font-weight:700;margin-bottom:1.5mm">Comportamento</div>
@@ -628,9 +628,10 @@ const runhead = ch => `<div class="run"><img src="${ICON}"><span>Manual do Harbo
     <tr><td>O vidro ficou só desfocado, sem refração</td><td>Falta a Gravação de Tela, ou o app ainda não foi reaberto (capítulo 04).</td></tr>
     <tr><td>A aba PRs mostra um erro</td><td>Rode <code>gh auth status</code>. Se precisar, rode <code>gh auth login</code> (capítulo 06).</td></tr>
     <tr><td>PRs da empresa não aparecem</td><td>Autorize o GitHub CLI no SSO da organização (capítulo 06).</td></tr>
-    <tr><td>O Claude Code não aparece no notch</td><td>Confira se aparece <i>✓ Ativo</i> em Integrações e reinicie as sessões do Claude Code.</td></tr>
+    <tr><td>O Claude Code não aparece no notch</td><td>Confira se aparece <i>✓ Ativo</i> em Integrações, abra o Harbor uma vez (ele se registra como destino dos eventos) e reinicie as sessões do Claude Code.</td></tr>
+    <tr><td>A atualização falha</td><td>Rode <code>gh auth status</code> no Terminal (o repositório é privado) e deixe o Harbor em <b>Aplicativos</b>.</td></tr>
     <tr><td>O Spotify não conecta</td><td>O Redirect URI precisa ser exatamente <code>http://127.0.0.1:47878/callback</code>.</td></tr>
-    <tr><td>O island some em tela cheia</td><td>Isso é intencional. Desligue <span class="ui">Ocultar em tela cheia</span> em <span class="path">Ajustes<i>›</i>Geral</span>.</td></tr>
+    <tr><td>O island some em tela cheia</td><td>Ele só se recolhe quando o app da atividade que mostra (ex.: Spotify tocando) está em tela cheia na frente. Desligue <span class="ui">Recolher em tela cheia</span> em <span class="path">Ajustes<i>›</i>Geral</span>.</td></tr>
     <tr><td>Monitor externo sem notch</td><td>Escolha a tela em <span class="path">Ajustes<i>›</i>Geral<i>›</i>Telas</span>. Em telas sem notch, o island fica no topo.</td></tr>
   </table>
 

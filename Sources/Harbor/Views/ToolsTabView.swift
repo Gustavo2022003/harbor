@@ -1,14 +1,16 @@
 import SwiftUI
 
-/// Aba "Ferramentas": nota rápida, conta-gotas e monitor de rede.
+/// Aba "Ferramentas": nota rápida, conta-gotas, monitor de rede e aparelhos Bluetooth.
 struct ToolsTabView: View {
     var body: some View {
         HStack(spacing: 14) {
             QuickNoteModule().frame(maxWidth: .infinity)
             ModuleDivider()
-            ColorPickerModule().frame(width: 230)
+            ColorPickerModule().frame(width: 200)
             ModuleDivider()
-            NetworkModule().frame(width: 230)
+            NetworkModule().frame(width: 200)
+            ModuleDivider()
+            BluetoothModule().frame(width: 240)
         }
         .padding(.horizontal, 4)
     }
@@ -143,5 +145,96 @@ struct NetworkModule: View {
                 .animation(.snappy, value: text)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+    }
+}
+
+// MARK: - Aparelhos Bluetooth
+
+struct BluetoothModule: View {
+    @EnvironmentObject var bt: BluetoothMonitor
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Label("Bluetooth", systemImage: "dot.radiowaves.left.and.right")
+                    .font(.system(size: 12, weight: .bold)).foregroundStyle(BluetoothMonitor.tint)
+                Spacer()
+                if bt.outputIsBluetooth {
+                    Label("Som aqui", systemImage: "speaker.wave.2.fill")
+                        .font(.system(size: 10, weight: .semibold)).foregroundStyle(Theme.secondary)
+                        .help("Som saindo em \(bt.outputName)")
+                }
+            }
+            if bt.devices.isEmpty {
+                Spacer(minLength: 0)
+                Text("Nenhum aparelho conectado")
+                    .font(.system(size: 12)).foregroundStyle(Theme.secondary)
+                    .frame(maxWidth: .infinity)
+                Spacer(minLength: 0)
+            } else {
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 5) {
+                        ForEach(bt.devices) { row($0) }
+                    }
+                }
+            }
+        }
+        .onAppear { bt.refresh() }
+    }
+
+    private func row(_ d: BluetoothMonitor.Device) -> some View {
+        let playing = bt.outputIsBluetooth && bt.outputName.hasPrefix(d.shortName)
+        return HStack(spacing: 8) {
+            Image(systemName: d.icon)
+                .font(.system(size: 13, weight: .semibold))
+                .foregroundStyle(playing ? BluetoothMonitor.tint : .white)
+                .frame(width: 20)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(d.shortName).font(.system(size: 12, weight: .semibold)).lineLimit(1)
+                HStack(spacing: 7) {
+                    if d.left != nil || d.right != nil {
+                        part("E", d.left); part("D", d.right)
+                        if d.caseLevel != nil { part("Estojo", d.caseLevel) }
+                    } else if let m = d.main {
+                        part(nil, m)
+                    } else {
+                        Text("Bateria indisponível").font(.system(size: 10)).foregroundStyle(Theme.secondary)
+                    }
+                }
+            }
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 8).padding(.vertical, 5)
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(Theme.card))
+    }
+
+    @ViewBuilder
+    private func part(_ label: String?, _ value: Int?) -> some View {
+        if let value {
+            HStack(spacing: 3) {
+                if let label { Text(label).foregroundStyle(Theme.secondary) }
+                BatteryGlyph(level: value)
+                Text("\(value)%").monospacedDigit().foregroundStyle(value <= 20 ? .red : .white.opacity(0.85))
+            }
+            .font(.system(size: 10, weight: .semibold))
+        }
+    }
+}
+
+/// Pilha pequena desenhada (preenchimento proporcional; vermelha abaixo de 20%).
+struct BatteryGlyph: View {
+    var level: Int
+    var body: some View {
+        HStack(spacing: 1) {
+            ZStack(alignment: .leading) {
+                RoundedRectangle(cornerRadius: 2).strokeBorder(Color.white.opacity(0.5), lineWidth: 1)
+                RoundedRectangle(cornerRadius: 1)
+                    .fill(level <= 20 ? Color.red : Theme.green)
+                    .frame(width: max(1.5, 13 * CGFloat(min(100, max(0, level))) / 100))
+                    .padding(1.5)
+            }
+            .frame(width: 17, height: 9)
+            RoundedRectangle(cornerRadius: 0.5).fill(Color.white.opacity(0.5)).frame(width: 1.5, height: 4)
+        }
     }
 }

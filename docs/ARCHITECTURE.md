@@ -22,7 +22,17 @@ main.swift ─► AppDelegate ─► NotchController ─┬─► NotchPanel (NS
 
 ### Prioridade do notch fechado
 
-`alert` › `meeting` › `download` › `claude` › `music` › `timer` › `none`
+`alert` › `meeting` › `download` › `music` › `claude` › `timer` › `none`
+
+Com música e Claude ativos ao mesmo tempo, a música ocupa as asas e o selo do Claude aparece ao lado da capa (`vm.claudeBehindMusic`).
+
+### Aba temporária "Agora"
+
+`NookTab.live` só aparece na barra quando `vm.live` (calculado por `computeLive()`: reunião, Claude, download, timer) não está vazio. O hover com algo rodando abre nela. Ao fechar, `tabBeforeLive` devolve o usuário à aba anterior. Sem o ajuste `reopenLastTab`, o notch sempre abre no Início ou na Agora.
+
+### Tela cheia
+
+O island só se recolhe quando o app da atividade mostrada (`islandSourceApps()`: o app da música ou o terminal do Claude, vindo de `__CFBundleIdentifier` no hook) está em tela cheia na frente, com debounce de 0,45 s.
 
 ## Serviços (`Sources/Harbor/Services`)
 
@@ -35,7 +45,9 @@ main.swift ─► AppDelegate ─► NotchController ─┬─► NotchPanel (NS
 | `AlertCenter` | Avisos (volume, brilho, energia, Bluetooth) | CoreAudio, DisplayServices, IOKit, IOBluetooth |
 | `MediaKeyInterceptor` | Substitui o aviso nativo de volume/brilho | `CGEventTap` (NX_SYSDEFINED) |
 | `MicController` | Mudo global e "microfone em uso" | CoreAudio (entrada padrão) |
-| `ClaudeActivity` | Sessões do Claude Code | Hooks → `harbor://claude?d=…` |
+| `ClaudeActivity` | Sessões do Claude Code, pedido, ferramenta em uso e última mensagem | Hooks → `harbor://claude?d=…&app=…` (entregue ao app em `~/.harbor/app-path`) + transcript JSONL |
+| `BluetoothMonitor` | Aparelhos conectados, bateria e se o som sai por Bluetooth | `system_profiler SPBluetoothDataType -json`, CoreAudio |
+| `Updater` | Compara com a última release, baixa, verifica a assinatura e troca o app | `gh release view/download`, Security (`SecStaticCodeCheckValidity` com o requisito designado do app atual) |
 | `GitHubStatus` | PRs, checks e revisões | `gh api graphql` |
 | `DownloadsMonitor` | Downloads em andamento | `~/Downloads` + `NSProgress` |
 | `AppPinStore` | Apps fixados e badges | NSWorkspace + Acessibilidade (Dock) |
@@ -49,7 +61,7 @@ main.swift ─► AppDelegate ─► NotchController ─┬─► NotchPanel (NS
 - `NotchRootView`: forma do island (`NotchShape`), superfície (`IslandSurface`: preto ou Liquid Glass),
   bolhas laterais e a barra de abas.
 - `ClosedNotchView`: conteúdo do island fechado (asas) e as bolhas.
-- Uma view por aba (`NookHomeView`, `MediaTabView`, `ClipboardTabView`, `PRsTabView`, …).
+- Uma view por aba (`LiveTabView`, `NookHomeView`, `MediaTabView`, `ClipboardTabView`, `PRsTabView`, …).
 
 ## Convenções
 
@@ -57,4 +69,6 @@ main.swift ─► AppDelegate ─► NotchController ─┬─► NotchPanel (NS
   Use `@Local` (`Views/Local.swift`), que tem a mesma semântica.
 - Preferências em `UserDefaults` (`@AppStorage`). Chaves agrupadas em enums (`Prefs`, `VizPrefs`, …).
 - Shaders Metal são compilados em tempo de execução (`device.makeLibrary(source:)`).
-- Depuração visual: `build/Harbor.app/Contents/MacOS/Harbor --snapshot <pasta>` gera um PNG de cada aba.
+- Depuração visual: `build/Harbor.app/Contents/MacOS/Harbor --snapshot <pasta>` gera um PNG de cada aba, mais `closed` e `closed-music` (música com o selo do Claude). O modo usa uma sessão fictícia do Claude.
+- Teste da atualização: `Harbor --update-now` procura e instala sem clique (use numa cópia com versão menor).
+- Uma cópia do app que não deve receber eventos (CI, testes) precisa ficar sem `CFBundleURLTypes`, ou o macOS pode entregar o `harbor://` para ela.

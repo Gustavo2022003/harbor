@@ -20,6 +20,8 @@ final class ClaudeActivity: ObservableObject {
         var toolDetail: String?
         var toolCount = 0
         var lastText: String?
+        /// App onde o Claude roda (Terminal, iTerm, VS Code…), vindo do hook.
+        var appBundleID: String?
     }
 
     private static let log = Logger(subsystem: "com.gustavo.harbor", category: "claude")
@@ -64,11 +66,12 @@ final class ClaudeActivity: ObservableObject {
     #!/bin/sh
     # Harbor ⚓︎ — repassa eventos do Claude Code para o notch (não imprime nada).
     d=$(base64 | tr '+/' '-_' | tr -d '=\\n')
+    url="harbor://claude?d=$d&app=${__CFBundleIdentifier:-}"
     app=$(cat "$HOME/.harbor/app-path" 2>/dev/null)
     if [ -n "$app" ] && [ -d "$app" ]; then
-      open -g -a "$app" "harbor://claude?d=$d" >/dev/null 2>&1 &
+      open -g -a "$app" "$url" >/dev/null 2>&1 &
     else
-      open -g "harbor://claude?d=$d" >/dev/null 2>&1 &
+      open -g "$url" >/dev/null 2>&1 &
     fi
     exit 0
     """
@@ -106,12 +109,13 @@ final class ClaudeActivity: ObservableObject {
         let project = cwd.isEmpty ? "Claude Code" : URL(fileURLWithPath: cwd).lastPathComponent
 
         let transcript = json["transcript_path"] as? String
+        let hostApp = comps.queryItems?.first(where: { $0.name == "app" })?.value.flatMap { $0.isEmpty ? nil : $0 }
 
         switch event {
         case "UserPromptSubmit":
             let prompt = (json["prompt"] as? String ?? "").trimmingCharacters(in: .whitespacesAndNewlines)
             sessions[id] = Session(id: id, project: project, working: true, since: Date(),
-                                   cwd: cwd, prompt: prompt, transcript: transcript)
+                                   cwd: cwd, prompt: prompt, transcript: transcript, appBundleID: hostApp)
             updateTranscriptPolling()
         case "Stop":
             let elapsed = sessions[id].map { Date().timeIntervalSince($0.since) } ?? 0

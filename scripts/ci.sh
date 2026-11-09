@@ -75,7 +75,7 @@ if [[ $QUICK -eq 0 && $FAILS -eq 0 ]]; then
   else
     wait $PID; RC=$?
     TABS=$(grep -A1 'enum NookTab' Sources/Harbor/App/NotchViewModel.swift | grep -oE 'case .*' | sed 's/case//' | tr ',' '\n' | grep -c '[a-z]')
-    EXPECTED=$((TABS + 1))   # + o notch fechado
+    EXPECTED=$((TABS + 2))   # + notch fechado e fechado com música
     N=$(find "$SHOTS" -name '*.png' -size +1k | wc -l | tr -d ' ')
     if [[ $RC -ne 0 ]]; then bad "o app saiu com código $RC (veja $OUT/smoke.log)"
     elif [[ "$N" -lt "$EXPECTED" ]]; then bad "renderizou $N de $EXPECTED abas"
