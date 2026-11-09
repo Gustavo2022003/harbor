@@ -4,6 +4,14 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 
 ## [Unreleased]
 
+## [2.4.1] - 2026-11-09
+
+### Corrigido
+- Aviso nativo de volume e brilho voltando a aparecer junto com o do Harbor. A cópia de teste do CI usava o mesmo identificador do app (`com.gustavo.harbor`). Quando um pedido de permissão aparecia para ela e era aprovado, o macOS passava as permissões (Acessibilidade, Gravação de Tela, Calendários) para essa cópia ad-hoc, e o Harbor de verdade as perdia. A cópia agora usa `com.gustavo.harbor.ci`.
+
+### Documentação
+- README e manual: como recuperar as permissões (`tccutil reset …`) quando o aviso nativo volta a aparecer.
+
 ## [2.4.0] - 2026-11-09
 
 ### Adicionado
