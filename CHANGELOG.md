@@ -4,6 +4,9 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 
 ## [Unreleased]
 
+### Documentação
+- Problemas conhecidos viram issues com o rótulo `troubleshooting` (a primeira é a #3, sobre permissões perdidas), com link no README e na tela de abrir issue.
+
 ## [2.4.1] - 2026-11-09
 
 ### Corrigido

@@ -3,3 +3,6 @@ contact_links:
   - name: 📘 Manual (PDF)
     url: https://github.com/Gustavo2022003/harbor/blob/main/docs/manual/Harbor-Manual.pdf
     about: Passo a passo das configurações que pedem mais atenção. Talvez a resposta já esteja lá.
+  - name: 🛟 Problemas conhecidos
+    url: https://github.com/Gustavo2022003/harbor/issues?q=label%3Atroubleshooting
+    about: Problemas que já aconteceram, com causa e solução passo a passo.

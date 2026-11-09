@@ -256,6 +256,8 @@ Leva cerca de 30 s. Num push que não mexe em código (só docs, por exemplo), o
 <img src="docs/banners/problemas.png" width="100%" alt="Solução de problemas">
 
 
+Outros casos, com causa e solução passo a passo, estão nas [issues com o rótulo `troubleshooting`](../../issues?q=label%3Atroubleshooting).
+
 | Problema | Solução |
 |---|---|
 | Permissão dada, mas não funciona | Em Ajustes do Sistema › Privacidade, remova o Harbor (−) e adicione de novo. Depois de usar o `make signing`, isso deixa de acontecer. |
