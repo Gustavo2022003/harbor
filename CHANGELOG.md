@@ -4,6 +4,8 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 
 ## [Unreleased]
 
+## [2.3.0] - 2026-11-09
+
 ### Adicionado
 - Aba temporária **Agora**: aparece na barra de abas só enquanto algo está em execução (Claude Code, download, timer, reunião próxima) e abre sozinha ao passar o mouse no notch com uma atividade. Mostra os detalhes de cada uma: pedido, ferramenta em uso e última mensagem do Claude; progresso, velocidade e tempo restante dos downloads; controles do timer; botão de entrar na reunião. As outras abas continuam ao lado; ao fechar, o notch volta para a aba em que você estava.
 
