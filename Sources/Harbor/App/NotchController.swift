@@ -26,12 +26,15 @@ final class NotchController {
     let spotify = SpotifyAPI()
     let bluetooth = BluetoothMonitor()
     let updater = Updater()
+    let calls = CallMonitor()
+    let cleaning = CleaningMode()
 
     private var panel: NotchPanel!
     private var screen: NSScreen!
     private var trackTimer: Timer?
     private var tick = 0
     private var hoverStart: Date?
+    private var bubblesExitAt: Date?
     private var exitStart: Date?
     private var mouseWasDown = false
     private var dragChangeCount = 0
@@ -75,6 +78,10 @@ final class NotchController {
         bluetooth.start()
         updater.onAlert = { [weak self] a in self?.alerts.show(a, duration: 5) }
         updater.start()
+        calls.currentMeeting = { [weak self] in self?.calendar.meetingNow() }
+        calls.start()
+        cleaning.onAlert = { [weak self] a in self?.alerts.show(a, duration: 2.5) }
+        cleaning.willStart = { [weak self] in self?.close() }
         pins.startBadges()
         github.onAlert = { [weak self] a in self?.alerts.show(a, duration: 4) }
         github.start()
@@ -124,6 +131,9 @@ final class NotchController {
         trackTimer = Timer(timeInterval: 1.0 / 30.0, repeats: true) { [weak self] _ in self?.track() }
         RunLoop.main.add(trackTimer!, forMode: .common)
     }
+
+    /// Menu "Modo limpeza".
+    func startCleaning() { cleaning.start() }
 
     /// Menu "Procurar atualizações…": verifica e abre Ajustes › Sobre.
     func checkForUpdates() {
@@ -195,9 +205,12 @@ final class NotchController {
         let states: [(String, Bool, NookTab)] = NookTab.allCases.map { ($0.rawValue, true, $0) }
             .map { $0.0 == "nook" ? ("nook", true, NookTab.nook) : $0 }
         // "closed-music": música nas asas com o Claude trabalhando por trás (selo na capa + fone)
-        let all = [("closed", false, NookTab.nook), ("closed-music", false, NookTab.nook)] + states
+        let all = [("closed", false, NookTab.nook), ("closed-music", false, NookTab.nook),
+                   ("closed-call", false, NookTab.nook)] + states
         // Sessão fictícia do Claude para a aba temporária "Agora" aparecer nas capturas
         claude.injectDemo()
+        calls.injectDemo()
+        pins.injectDemo()
         vm.live = computeLive()
         func shoot(_ idx: Int) {
             guard idx < all.count else { NSApp.terminate(nil); return }
@@ -205,7 +218,10 @@ final class NotchController {
             vm.tab = tab
             vm.isOpen = open
             DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                if name == "closed-music" {
+                if name == "closed-call" {
+                    self.vm.closedActivity = .call
+                    self.vm.claudeBehindMusic = false
+                } else if name == "closed-music" {
                     self.vm.closedActivity = .music
                     self.vm.claudeBehindMusic = true
                     self.vm.musicOnBluetooth = self.bluetooth.outputIsBluetooth
@@ -282,6 +298,8 @@ final class NotchController {
                 .environmentObject(spotify)
                 .environmentObject(bluetooth)
                 .environmentObject(updater)
+                .environmentObject(calls)
+                .environmentObject(cleaning)
             let host = NSHostingView(rootView: root)
             host.sizingOptions = []
             host.frame = NSRect(origin: .zero, size: rect.size)
@@ -339,6 +357,8 @@ final class NotchController {
 
     private func computeActivity() -> ClosedActivity {
         if alerts.current != nil { return .alert }
+        // Em chamada (Meet, Teams, Zoom…): ícone do serviço + visualizador, como a música
+        if calls.call != nil { return .call }
         if let m = calendar.nextMeeting, m.start.timeIntervalSinceNow < 10 * 60 { return .meeting }
         if !downloads.items.isEmpty { return .download }
         // Música tem prioridade sobre o Claude; ele continua indicado na capa e na aba "Agora".
@@ -351,6 +371,7 @@ final class NotchController {
     /// Atividades em execução, na ordem dos cartões da aba "Agora".
     private func computeLive() -> [LiveKind] {
         var live: [LiveKind] = []
+        if calls.call != nil { live.append(.call) }
         if let m = calendar.nextMeeting, m.start.timeIntervalSinceNow < 10 * 60 { live.append(.meeting) }
         if !claude.liveSessions.isEmpty { live.append(.claude) }
         if !downloads.items.isEmpty { live.append(.download) }
@@ -375,7 +396,7 @@ final class NotchController {
 
     private func periodicChecks() {
         // Visualizador real: liga/desliga captura de áudio
-        audio.update(musicPlaying: media.info?.isPlaying == true)
+        audio.update(musicPlaying: media.info?.isPlaying == true || calls.call != nil)
 
         // Aviso 1 min antes da reunião
         if let m = calendar.nextMeeting, !alertedMeetings.contains(m.id) {
@@ -398,7 +419,8 @@ final class NotchController {
 
     /// Apps de onde vem a atividade que o island mostra agora (a música, o terminal do Claude).
     private func islandSourceApps() -> Set<String> {
-        // Mesma prioridade das asas do notch fechado (música antes do Claude); ignora avisos passageiros.
+        // Mesma prioridade das asas do notch fechado (chamada, música, Claude); ignora avisos passageiros.
+        if let c = calls.call { return [c.appBundleID] }
         if media.info?.isPlaying == true { return Set([media.info?.source.bundleID].compactMap { $0 }) }
         if claude.workingSession != nil {
             return Set(claude.liveSessions.compactMap(\.appBundleID))
@@ -495,6 +517,10 @@ final class NotchController {
             if onBT != vm.musicOnBluetooth {
                 withAnimation(.spring(response: 0.45, dampingFraction: 0.78)) { vm.musicOnBluetooth = onBT }
             }
+            let muted = act == .call && mic.isMuted
+            if muted != vm.callMicMuted {
+                withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { vm.callMicMuted = muted }
+            }
             let claudeBehind = act == .music && claude.workingSession != nil
             if claudeBehind != vm.claudeBehindMusic {
                 withAnimation(.spring(response: 0.4, dampingFraction: 0.7)) { vm.claudeBehindMusic = claudeBehind }
@@ -513,12 +539,24 @@ final class NotchController {
 
         if !vm.isOpen {
             // Bolhas de apps fixados: aceitam clique só enquanto o mouse está sobre elas
-            if let lb = leftBubblesRect(), lb.contains(p) {
+            if let lb = leftBubblesRect(), lb.insetBy(dx: -4, dy: 0).contains(p) {
                 if panel.ignoresMouseEvents { panel.ignoresMouseEvents = false }
+                bubblesExitAt = nil
+                if !vm.bubblesExpanded {
+                    withAnimation(.spring(response: 0.38, dampingFraction: 0.72)) { vm.bubblesExpanded = true }
+                }
                 hoverStart = nil
                 return
-            } else if !panel.ignoresMouseEvents {
-                panel.ignoresMouseEvents = true
+            } else {
+                if !panel.ignoresMouseEvents { panel.ignoresMouseEvents = true }
+                // Fecha a pilha um instante depois de o mouse sair
+                if vm.bubblesExpanded {
+                    if bubblesExitAt == nil { bubblesExitAt = Date() }
+                    if Date().timeIntervalSince(bubblesExitAt!) > 0.35 {
+                        bubblesExitAt = nil
+                        withAnimation(.spring(response: 0.38, dampingFraction: 0.72)) { vm.bubblesExpanded = false }
+                    }
+                }
             }
             if let b = bubbleRect(), b.contains(p), !down {
                 if hoverStart == nil { hoverStart = Date() }

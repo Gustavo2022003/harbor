@@ -126,6 +126,12 @@ final class AppPinStore: ObservableObject {
         return PinnedApp(bundleID: bundleID, name: name, icon: NSWorkspace.shared.icon(forFile: url.path))
     }
 
+    /// `--snapshot`: todos os apps fixados visíveis, com um selo de exemplo.
+    func injectDemo() {
+        visible = pinned.compactMap(Self.info)
+        if let first = visible.first { badges = [first.bundleID: "3"] }
+    }
+
     private func recompute() {
         let running = Set(NSWorkspace.shared.runningApplications.compactMap(\.bundleIdentifier))
         let v = pinned

@@ -73,6 +73,7 @@ struct QuickNoteModule: View {
 
 struct ColorPickerModule: View {
     @EnvironmentObject var picker: ColorPickerStore
+    @EnvironmentObject var cleaning: CleaningMode
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
@@ -105,6 +106,11 @@ struct ColorPickerModule: View {
                 }
             }
             Spacer(minLength: 0)
+            Button { cleaning.start() } label: {
+                Label("Modo limpeza", systemImage: "keyboard.badge.ellipsis")
+            }
+            .buttonStyle(PillButtonStyle(tint: .white))
+            .help("Bloqueia teclado, trackpad e mouse para limpar o MacBook. Para sair, segure o clique por 3,5 s.")
         }
     }
 }

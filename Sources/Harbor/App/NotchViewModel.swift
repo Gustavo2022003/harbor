@@ -42,12 +42,12 @@ enum NookTab: String, CaseIterable, Identifiable {
 
 /// Atividades em execução que ganham um cartão na aba temporária "Agora".
 enum LiveKind: Equatable {
-    case claude, download, timer, meeting
+    case call, claude, download, timer, meeting
 }
 
 /// O que aparece nas "asas" do notch fechado.
 enum ClosedActivity: Equatable {
-    case none, music, timer, claude, meeting, download, alert
+    case none, music, timer, claude, meeting, download, alert, call
 }
 
 final class NotchViewModel: ObservableObject {
@@ -70,6 +70,8 @@ final class NotchViewModel: ObservableObject {
     @Published var musicOnBluetooth = false
     /// Claude trabalhando enquanto a música ocupa as asas (selo na capa).
     @Published var claudeBehindMusic = false
+    /// Em chamada com o microfone no mudo (ícone vermelho na asa).
+    @Published var callMicMuted = false
     /// Aba em que o usuário estava antes de a aba "Agora" abrir sozinha.
     var tabBeforeLive: NookTab = .nook
 
@@ -91,6 +93,8 @@ final class NotchViewModel: ObservableObject {
     let bubbleGap: CGFloat = 6
     @Published var bubbleWidth: CGFloat = 0
     @Published var leftBubblesWidth: CGFloat = 0
+    /// Pilha de bolhas aberta (mouse em cima); fechada, ela ocupa pouco e não cobre a barra de menus.
+    @Published var bubblesExpanded = false
 
     func flare(open: Bool) -> CGFloat { open ? 16 : 6 }
     func bottomRadius(open: Bool) -> CGFloat { open ? 30 : 11 }
@@ -104,6 +108,9 @@ final class NotchViewModel: ObservableObject {
         case .download: return 72
         // "12m05s" não cabe na asa padrão: alarga para o tempo não encostar na borda
         case .claude: return 70
+        case .call:
+            // ícone + visualizador (+ microfone mudo)
+            return notchSize.height + 16 + (callMicMuted ? 16 : 0)
         case .music:
             // capa + quadrado do Claude lado a lado (com margem até a borda) quando ele trabalha por trás
             let base = notchSize.height + 16 + (musicOnBluetooth ? 16 : 0)

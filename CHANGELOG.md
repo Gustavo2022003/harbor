@@ -4,6 +4,23 @@ Todas as mudanças relevantes do Harbor. Formato baseado em [Keep a Changelog](h
 
 ## [Unreleased]
 
+## [2.5.0] - 2026-11-19
+
+### Adicionado
+- **Chamadas no notch**: em chamada no Google Meet, Teams, Zoom, FaceTime, Slack, Discord, Webex ou WhatsApp, o notch fechado mostra o ícone do serviço (com um ponto verde) e o visualizador, como a música. Com o microfone no mudo, aparece um microfone vermelho. A aba **Agora** ganha um cartão com o tempo de chamada, o título da reunião e os botões **Voltar à chamada** e **Mudo**. A chamada tem prioridade sobre a música e o Claude.
+  - A detecção não pede permissão nova: o CoreAudio informa qual app está usando o microfone.
+  - Nos navegadores, o serviço vem do título da janela ou da reunião da Agenda que está acontecendo, pelo link.
+  - O ícone do Meet e do Teams web é o favicon do serviço, baixado uma vez e guardado em cache.
+- **Modo limpeza**: bloqueia teclado (inclusive as teclas de mídia), trackpad e mouse para limpar o MacBook. Fica na aba Ferramentas e no menu da âncora › **Modo limpeza (bloquear teclado)**. Uma camada escura cobre as telas e mostra como sair: segurar o clique por **3,5 s**, com um anel de progresso. Por segurança, destrava sozinho em 5 minutos. Usa a permissão de Acessibilidade.
+
+### Alterado
+- **Bolhas em pilha**: com mais de uma bolha (microfone e apps fixados), elas ficam empilhadas. A primeira fica inteira e as outras espiam por trás, menores, com um selo só para o total de não lidas. Assim não cobrem os ícones da barra de menus. Ao passar o mouse, a pilha se abre em leque e cada bolha fica clicável.
+- Selo de não lidas no canto inferior direito das bolhas (no superior, encostava na borda da tela).
+
+### Documentação
+- Problemas conhecidos viram issues com o rótulo `troubleshooting` (a primeira é a #3, sobre permissões perdidas), com link no README e na tela de abrir issue.
+- README, manual e ARCHITECTURE atualizados com chamadas, modo limpeza e bolhas em pilha.
+
 ## [2.4.1] - 2026-11-09
 
 ### Corrigido

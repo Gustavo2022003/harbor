@@ -18,6 +18,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         menu.addItem(withTitle: "Ajustes…", action: #selector(openSettings), keyEquivalent: ",").target = self
         menu.addItem(withTitle: "Procurar atualizações…", action: #selector(checkUpdates), keyEquivalent: "").target = self
         menu.addItem(.separator())
+        menu.addItem(withTitle: "Modo limpeza (bloquear teclado)", action: #selector(startCleaning), keyEquivalent: "").target = self
+        menu.addItem(.separator())
         menu.addItem(withTitle: "Enviar feedback…", action: #selector(openFeedback), keyEquivalent: "").target = self
         menu.addItem(withTitle: "Repositório oficial", action: #selector(openRepo), keyEquivalent: "").target = self
         menu.addItem(.separator())
@@ -36,6 +38,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     @objc private func openNook() { controller.open(tab: .nook, pinned: true) }
     @objc private func openSettings() { controller.open(tab: .settings, pinned: true) }
+    @objc private func startCleaning() { controller.startCleaning() }
     @objc private func checkUpdates() { controller.checkForUpdates() }
     @objc private func openFeedback() { HarborLinks.open(HarborLinks.feedback) }
     @objc private func openRepo() { HarborLinks.open(HarborLinks.repo) }

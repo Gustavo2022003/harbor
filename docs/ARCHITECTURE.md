@@ -22,7 +22,7 @@ main.swift ─► AppDelegate ─► NotchController ─┬─► NotchPanel (NS
 
 ### Prioridade do notch fechado
 
-`alert` › `meeting` › `download` › `music` › `claude` › `timer` › `none`
+`alert` › `call` › `meeting` › `download` › `music` › `claude` › `timer` › `none`
 
 Com música e Claude ativos ao mesmo tempo, a música ocupa as asas e o selo do Claude aparece ao lado da capa (`vm.claudeBehindMusic`).
 
@@ -46,6 +46,8 @@ O island só se recolhe quando o app da atividade mostrada (`islandSourceApps()`
 | `MediaKeyInterceptor` | Substitui o aviso nativo de volume/brilho | `CGEventTap` (NX_SYSDEFINED) |
 | `MicController` | Mudo global e "microfone em uso" | CoreAudio (entrada padrão) |
 | `ClaudeActivity` | Sessões do Claude Code, pedido, ferramenta em uso e última mensagem | Hooks → `harbor://claude?d=…&app=…` (entregue ao app em `~/.harbor/app-path`) + transcript JSONL |
+| `CallMonitor` | Chamada em andamento: serviço, título e app | CoreAudio (`kAudioHardwarePropertyProcessObjectList` + `kAudioProcessPropertyIsRunningInput`), títulos de janela, Agenda (`meetingNow()`) |
+| `CleaningMode` | Modo limpeza: bloqueia toda a entrada até segurar o clique por 3,5 s | `CGEventTap` no nível HID (todos os eventos), `CGAssociateMouseAndMouseCursorPosition`, janelas `.screenSaver` |
 | `BluetoothMonitor` | Aparelhos conectados, bateria e se o som sai por Bluetooth | `system_profiler SPBluetoothDataType -json`, CoreAudio |
 | `Updater` | Compara com a última release, baixa, verifica a assinatura e troca o app | `gh release view/download`, Security (`SecStaticCodeCheckValidity` com o requisito designado do app atual) |
 | `GitHubStatus` | PRs, checks e revisões | `gh api graphql` |
@@ -60,7 +62,7 @@ O island só se recolhe quando o app da atividade mostrada (`islandSourceApps()`
 
 - `NotchRootView`: forma do island (`NotchShape`), superfície (`IslandSurface`: preto ou Liquid Glass),
   bolhas laterais e a barra de abas.
-- `ClosedNotchView`: conteúdo do island fechado (asas) e as bolhas.
+- `ClosedNotchView`: conteúdo do island fechado (asas) e as bolhas. As bolhas usam `BubbleStackLayout` (um `Layout` próprio): empilhadas quando `vm.bubblesExpanded` é falso, lado a lado no hover.
 - Uma view por aba (`LiveTabView`, `NookHomeView`, `MediaTabView`, `ClipboardTabView`, `PRsTabView`, …).
 
 ## Convenções
@@ -69,6 +71,6 @@ O island só se recolhe quando o app da atividade mostrada (`islandSourceApps()`
   Use `@Local` (`Views/Local.swift`), que tem a mesma semântica.
 - Preferências em `UserDefaults` (`@AppStorage`). Chaves agrupadas em enums (`Prefs`, `VizPrefs`, …).
 - Shaders Metal são compilados em tempo de execução (`device.makeLibrary(source:)`).
-- Depuração visual: `build/Harbor.app/Contents/MacOS/Harbor --snapshot <pasta>` gera um PNG de cada aba, mais `closed` e `closed-music` (música com o selo do Claude). O modo usa uma sessão fictícia do Claude.
+- Depuração visual: `build/Harbor.app/Contents/MacOS/Harbor --snapshot <pasta>` gera um PNG de cada aba, mais `closed`, `closed-music` (música com o selo do Claude) e `closed-call` (chamada do Meet). O modo usa dados fictícios: sessão do Claude, chamada e todos os apps fixados visíveis com um selo.
 - Teste da atualização: `Harbor --update-now` procura e instala sem clique (use numa cópia com versão menor).
 - Uma cópia do app que não deve receber eventos (CI, testes) precisa ficar sem `CFBundleURLTypes`, ou o macOS pode entregar o `harbor://` para ela. Ela também precisa de outro `CFBundleIdentifier` (o CI usa `com.gustavo.harbor.ci`): com o mesmo id e outra assinatura, uma permissão aprovada para a cópia substitui a do app real no TCC.

@@ -10,6 +10,7 @@ struct ClosedNotchView: View {
     @EnvironmentObject var calendar: CalendarStore
     @EnvironmentObject var downloads: DownloadsMonitor
     @EnvironmentObject var bluetooth: BluetoothMonitor
+    @EnvironmentObject var calls: CallMonitor
     @AppStorage(Prefs.showVisualizer) private var showVisualizer = true
 
     var body: some View {
@@ -48,6 +49,26 @@ struct ClosedNotchView: View {
                 }
                 .frame(width: wing, alignment: .center)
                 .animation(.spring(response: 0.4, dampingFraction: 0.75), value: vm.musicOnBluetooth)
+            case .call:
+                let tint = calls.call?.provider.color ?? Theme.green
+                CallIcon(image: calls.icon, size: h - 10)
+                    .frame(width: wing, alignment: .center)
+                    .help(calls.call.map { $0.provider.name + ($0.title.map { " · \($0)" } ?? "") } ?? "")
+                Spacer(minLength: 0)
+                HStack(spacing: 4) {
+                    if vm.callMicMuted {
+                        Image(systemName: "mic.slash.fill")
+                            .font(.system(size: 10.5, weight: .bold)).foregroundStyle(.red)
+                            .transition(.scale.combined(with: .opacity))
+                    }
+                    if showVisualizer {
+                        AudioVisualizer(isPlaying: true, color: tint,
+                                        bars: 5, barWidth: 3, spacing: 2, maxHeight: min(22, h - 8))
+                    } else {
+                        Image(systemName: "waveform").font(.system(size: 13, weight: .semibold)).foregroundStyle(tint)
+                    }
+                }
+                .frame(width: wing, alignment: .center)
             case .timer:
                 Image(systemName: timer.mode == .focus ? "timer" : "cup.and.saucer.fill")
                     .font(.system(size: 13, weight: .semibold))
@@ -171,6 +192,28 @@ struct ClaudeSpinner: View {
                 .foregroundStyle(ClaudeActivity.claudeColor)
                 .rotationEffect(.degrees(t * 120))
                 .scaleEffect(1 + 0.12 * sin(t * 4))
+        }
+    }
+}
+
+/// Ícone do serviço da chamada (Meet, Teams, app nativo), com um pontinho verde "ao vivo".
+struct CallIcon: View {
+    var image: NSImage?
+    var size: CGFloat
+    var body: some View {
+        Group {
+            if let image {
+                Image(nsImage: image).resizable().interpolation(.high).aspectRatio(contentMode: .fit)
+            } else {
+                Image(systemName: "video.fill").font(.system(size: size * 0.5, weight: .semibold))
+                    .foregroundStyle(Theme.green)
+            }
+        }
+        .frame(width: size, height: size)
+        .overlay(alignment: .bottomTrailing) {
+            Circle().fill(Theme.green).frame(width: 7, height: 7)
+                .overlay(Circle().strokeBorder(Color.black, lineWidth: 1.5))
+                .offset(x: 2, y: 2)
         }
     }
 }
@@ -349,18 +392,55 @@ struct PinnedAppBubbles: View {
     @EnvironmentObject var vm: NotchViewModel
     @EnvironmentObject var mic: MicController
 
-    var body: some View {
-        let h = max(18, vm.notchSize.height - 6)
-        HStack(spacing: 5) {
-            if mic.isMuted || mic.inUse {
-                MicBubble(height: h).transition(.scale(scale: 0.3).combined(with: .opacity))
-            }
-            ForEach(pins.visible) { app in
-                PinnedAppBubble(app: app, height: h)
-                    .transition(.scale(scale: 0.3).combined(with: .opacity))
+    /// Soma das não lidas dos apps visíveis ("•" se algum selo não for número).
+    private var totalBadge: String? {
+        let values = pins.visible.compactMap { pins.badges[$0.bundleID] }
+        guard !values.isEmpty else { return nil }
+        let nums = values.compactMap { Int($0) }
+        guard nums.count == values.count else { return "•" }
+        let sum = nums.reduce(0, +)
+        return sum > 99 ? "99+" : "\(sum)"
+    }
+
+    private enum Item: Identifiable {
+        case mic, app(AppPinStore.PinnedApp)
+        var id: String {
+            switch self {
+            case .mic: return "mic"
+            case .app(let a): return a.bundleID
             }
         }
-        .fixedSize()
+    }
+
+    var body: some View {
+        let h = max(18, vm.notchSize.height - 6)
+        // O microfone fica sempre na frente da pilha
+        let items: [Item] = (mic.isMuted || mic.inUse ? [.mic] : []) + pins.visible.map { .app($0) }
+        let stacked = items.count > 1 && !vm.bubblesExpanded
+        BubbleStackLayout(expanded: !stacked) {
+                ForEach(Array(items.enumerated()), id: \.element.id) { i, item in
+                    Group {
+                        switch item {
+                        case .mic: MicBubble(height: h)
+                        case .app(let a): PinnedAppBubble(app: a, height: h, showBadge: !stacked)
+                        }
+                    }
+                    // Atrás da primeira: um pouco menores e mais apagadas (profundidade)
+                    .scaleEffect(stacked && i > 0 ? 1 - min(0.18, 0.07 * Double(i)) : 1)
+                    .opacity(stacked && i > 0 ? max(0.55, 1 - 0.18 * Double(i)) : 1)
+                    .zIndex(Double(items.count - i))
+                    .allowsHitTesting(!stacked || i == 0)
+                    .transition(.scale(scale: 0.3).combined(with: .opacity))
+                }
+            }
+            .overlay(alignment: .bottomTrailing) {
+                // Pilha fechada: um selo só, com o total de não lidas
+                if stacked, let total = totalBadge {
+                    BadgeView(text: total).offset(x: 4, y: 3).transition(.scale.combined(with: .opacity))
+                }
+            }
+            .animation(.spring(response: 0.38, dampingFraction: 0.72), value: stacked)
+            .fixedSize()
         .background(GeometryReader { g in
             Color.clear
                 .onAppear { vm.leftBubblesWidth = g.size.width }
@@ -370,10 +450,58 @@ struct PinnedAppBubbles: View {
     }
 }
 
+/// Bolhas lado a lado (aberta) ou empilhadas (fechada): a primeira inteira e as outras
+/// "espiando" por trás, `peek` pontos cada. Mudar `expanded` anima as posições.
+struct BubbleStackLayout: Layout {
+    var expanded: Bool
+    var spacing: CGFloat = 5
+    var peek: CGFloat = 14
+
+    private func offsets(_ sizes: [CGSize]) -> [CGFloat] {
+        guard let first = sizes.first else { return [] }
+        if expanded {
+            var x: CGFloat = 0
+            return sizes.map { s in defer { x += s.width + spacing }; return x }
+        }
+        // borda direita de cada uma: a da primeira + peek × i
+        return sizes.enumerated().map { i, s in i == 0 ? 0 : first.width + peek * CGFloat(i) - s.width }
+    }
+
+    func sizeThatFits(proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) -> CGSize {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        let xs = offsets(sizes)
+        let width = zip(xs, sizes).map { $0 + $1.width }.max() ?? 0
+        return CGSize(width: width, height: sizes.map(\.height).max() ?? 0)
+    }
+
+    func placeSubviews(in bounds: CGRect, proposal: ProposedViewSize, subviews: Subviews, cache: inout ()) {
+        let sizes = subviews.map { $0.sizeThatFits(.unspecified) }
+        for (i, x) in offsets(sizes).enumerated() {
+            subviews[i].place(at: CGPoint(x: bounds.minX + x, y: bounds.midY), anchor: .leading,
+                              proposal: ProposedViewSize(sizes[i]))
+        }
+    }
+}
+
+/// Selo vermelho de não lidas.
+struct BadgeView: View {
+    var text: String
+    var body: some View {
+        Text(text)
+            .font(.system(size: 8.5, weight: .heavy, design: .rounded))
+            .foregroundStyle(.white)
+            .padding(.horizontal, 3.5)
+            .frame(minWidth: 13, minHeight: 13)
+            .background(Capsule().fill(Color.red))
+            .overlay(Capsule().strokeBorder(Color.black, lineWidth: 1.5))
+    }
+}
+
 struct PinnedAppBubble: View {
     @EnvironmentObject var pins: AppPinStore
     let app: AppPinStore.PinnedApp
     let height: CGFloat
+    var showBadge = true
     @Local private var hover = false
 
     var body: some View {
@@ -385,16 +513,11 @@ struct PinnedAppBubble: View {
                 .frame(width: height + 6, height: height)
                 .background(Capsule().fill(Color.black))
                 .overlay(Capsule().strokeBorder(Color.white.opacity(hover ? 0.25 : 0.07)))
-                .overlay(alignment: .topTrailing) {
-                    if let badge = pins.badges[app.bundleID] {
-                        Text(badge.count > 3 ? "99+" : badge)
-                            .font(.system(size: 8.5, weight: .heavy, design: .rounded))
-                            .foregroundStyle(.white)
-                            .padding(.horizontal, 3.5)
-                            .frame(minWidth: 13, minHeight: 13)
-                            .background(Capsule().fill(Color.red))
-                            .overlay(Capsule().strokeBorder(Color.black, lineWidth: 1.5))
-                            .offset(x: 4, y: -3)
+                // Selo no canto inferior direito (no topo, ele encostava na borda da tela)
+                .overlay(alignment: .bottomTrailing) {
+                    if showBadge, let badge = pins.badges[app.bundleID] {
+                        BadgeView(text: badge.count > 3 ? "99+" : badge)
+                            .offset(x: 4, y: 3)
                             .transition(.scale.combined(with: .opacity))
                     }
                 }
