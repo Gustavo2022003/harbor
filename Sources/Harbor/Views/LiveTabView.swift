@@ -8,6 +8,7 @@ struct LiveTabView: View {
 
     static func tint(_ kind: LiveKind) -> Color {
         switch kind {
+        case .call: return Theme.green
         case .claude: return ClaudeActivity.claudeColor
         case .download: return LiveDownloadsCard.tint
         case .timer: return Theme.orange
@@ -17,9 +18,10 @@ struct LiveTabView: View {
 
     /// Um cartão por sessão do Claude; um para cada outra atividade.
     private enum Card: Identifiable {
-        case claude(String), download, timer, meeting
+        case call, claude(String), download, timer, meeting
         var id: String {
             switch self {
+            case .call: return "call"
             case .claude(let s): return "claude-" + s
             case .download: return "download"
             case .timer: return "timer"
@@ -31,6 +33,7 @@ struct LiveTabView: View {
     private var cards: [Card] {
         vm.live.flatMap { kind -> [Card] in
             switch kind {
+            case .call: return [.call]
             case .claude: return claude.liveSessions.map { .claude($0.id) }
             case .download: return [.download]
             case .timer: return [.timer]
@@ -70,6 +73,7 @@ struct LiveTabView: View {
     private func card(_ c: Card, wide: Bool) -> some View {
         Group {
             switch c {
+            case .call: LiveCallCard()
             case .claude(let id): LiveClaudeCard(sessionID: id, wide: wide)
             case .download: LiveDownloadsCard()
             case .timer: LiveTimerCard()
@@ -180,6 +184,50 @@ private struct ThinBar: View {
         }
         .frame(height: 5)
         .animation(.snappy, value: fraction)
+    }
+}
+
+// MARK: - Chamada
+
+private struct LiveCallCard: View {
+    @EnvironmentObject var calls: CallMonitor
+    @EnvironmentObject var mic: MicController
+
+    var body: some View {
+        if let c = calls.call {
+            let tint = c.provider.color
+            LiveCardShell(tint: tint) {
+                LiveHeader(title: c.provider.name, status: "Em chamada", tint: Theme.green) {
+                    CallIcon(image: calls.icon, size: 18)
+                } trailing: {
+                    TimelineView(.periodic(from: .now, by: 1)) { ctx in
+                        Text(ClaudeActivity.duration(ctx.date.timeIntervalSince(c.since)))
+                            .font(.system(size: 12.5, weight: .bold, design: .rounded))
+                            .monospacedDigit().foregroundStyle(Theme.green)
+                    }
+                }
+                if let t = c.title {
+                    Text(t).font(.system(size: 12, weight: .semibold)).lineLimit(1)
+                }
+                HStack(spacing: 5) {
+                    Image(systemName: mic.isMuted ? "mic.slash.fill" : "mic.fill")
+                        .font(.system(size: 10, weight: .bold))
+                        .foregroundStyle(mic.isMuted ? .red : Theme.green)
+                    Text(mic.isMuted ? "Microfone no mudo" : "Microfone ativo")
+                        .font(.system(size: 11)).foregroundStyle(Theme.secondary)
+                    if c.inBrowser {
+                        Text("· no navegador").font(.system(size: 11)).foregroundStyle(Theme.secondary)
+                    }
+                }
+                Spacer(minLength: 0)
+                HStack(spacing: 6) {
+                    LiveButton(title: "Voltar à chamada", icon: "arrow.up.forward.app", tint: tint) { calls.activate() }
+                    LiveButton(title: mic.isMuted ? "Ativar mic" : "Mudo",
+                               icon: mic.isMuted ? "mic.fill" : "mic.slash.fill",
+                               tint: mic.isMuted ? Theme.green : .white) { mic.toggle() }
+                }
+            }
+        }
     }
 }
 

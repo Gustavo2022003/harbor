@@ -159,6 +159,18 @@ final class CalendarStore: ObservableObject {
         if next != nextMeeting { nextMeeting = next }
     }
 
+    /// Reunião acontecendo agora (começou até 10 min atrás… ou começa em até 10 min), preferindo as que têm link.
+    func meetingNow() -> DayEvent? {
+        guard authorized else { return nil }
+        let now = Date()
+        let pred = store.predicateForEvents(withStart: now.addingTimeInterval(-12 * 3600),
+                                            end: now.addingTimeInterval(10 * 60), calendars: nil)
+        let live = store.events(matching: pred)
+            .filter { !$0.isAllDay && $0.startDate <= now.addingTimeInterval(10 * 60) && $0.endDate > now }
+            .map(Self.makeEvent)
+        return live.first { $0.link != nil } ?? live.first
+    }
+
     private static func makeEvent(_ e: EKEvent) -> DayEvent {
         DayEvent(id: (e.eventIdentifier ?? UUID().uuidString) + "\(e.startDate.timeIntervalSince1970)",
                  title: e.title ?? "Sem título",

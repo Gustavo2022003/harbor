@@ -23,13 +23,14 @@ Quando há algo acontecendo, o island cresce para os lados. A prioridade, da mai
 | Atividade | O que mostra |
 |---|---|
 | 🔔 **Avisos** | Volume, brilho, carregador, bateria fraca (do Mac e dos aparelhos Bluetooth), fones conectados, timer, Claude, PRs, downloads concluídos, microfone, atualização disponível |
+| 📞 **Chamada** | Ícone do Meet, Teams, Zoom, FaceTime, Slack… e o visualizador, como a música. Microfone vermelho quando você está no mudo. Detectada pelo app que está usando o microfone, sem permissão extra |
 | 📅 **Reunião** | Contagem regressiva nos 10 minutos antes da reunião |
 | ⬇️ **Download** | Anel de progresso com % ou tamanho |
 | 🎵 **Música** | Capa e visualizador (simulado ou real), com um brilho que pulsa. Com o som no Bluetooth, um ícone de fone aparece ao lado do visualizador. Se o Claude estiver trabalhando ao mesmo tempo, o selo dele gira ao lado da capa |
 | ✳️ **Claude Code** | Asterisco girando e o tempo de trabalho |
 | ⏱️ **Timer** | Tempo restante do Foco ou da Pausa |
 
-**Bolhas** ao lado do island: microfone (em uso ou no mudo), apps fixados (com badges do Dock) e o odômetro do mouse.
+**Bolhas** ao lado do island: microfone (em uso ou no mudo), apps fixados (com badges do Dock) e o odômetro do mouse. Com mais de uma, elas ficam **empilhadas**, com um selo só para o total de não lidas, para não cobrir os ícones da barra de menus. Ao passar o mouse, a pilha se abre em leque.
 
 ### Abas (passe o mouse no notch ou aperte ⌥ Espaço)
 Por padrão, o notch abre no **Início**, ou na aba **Agora** quando algo está rodando. Para voltar sempre à aba em que você parou, ligue **Reabrir na última aba** em Ajustes › Geral.
@@ -38,7 +39,7 @@ O island fica fixo ao trocar de Space. Ele só se recolhe quando o app da ativid
 
 | Aba | |
 |---|---|
-| **Agora** | Aparece só enquanto algo está rodando. Mostra o pedido, a ferramenta em uso e a última mensagem do Claude, o progresso dos downloads, os controles do timer e o botão de entrar na reunião |
+| **Agora** | Aparece só enquanto algo está rodando. Mostra a chamada (tempo, mudo e **Voltar à chamada**), o pedido, a ferramenta em uso e a última mensagem do Claude, o progresso dos downloads, os controles do timer e o botão de entrar na reunião |
 | **Início** | Música, CPU e bateria, timer Foco/Pausa (régua) e tarefas |
 | **Mídia** | Player completo, ❤️ curtir e a fila do Spotify |
 | **Copiados** | Histórico do ⌘C com busca; clique para colar |
@@ -47,7 +48,7 @@ O island fica fixo ao trocar de Space. Ele só se recolhe quando o app da ativid
 | **Bandeja** | Arraste arquivos até o notch; envie por AirDrop |
 | **Espelho** | Câmera 1:1, com o island esticado para baixo |
 | **Odômetro** | Distância que o mouse percorre, em metros, pés, ⚽ ou 🍌 |
-| **Ferramentas** | Nota rápida, conta-gotas, monitor de rede e aparelhos Bluetooth com a bateria de cada um |
+| **Ferramentas** | Nota rápida, conta-gotas, **Modo limpeza** (bloqueia teclado e trackpad para limpar o Mac; sai segurando o clique por 3,5 s), monitor de rede e aparelhos Bluetooth com a bateria de cada um |
 | **Ajustes** | Geral, Visual (temas, Liquid Glass), Integrações, Apps fixados e Sobre (links e atualizações) |
 
 <a name="manual"></a>
@@ -129,7 +130,7 @@ make run       # compila e abre
 | Permissão | Para quê | Obrigatória? |
 |---|---|---|
 | Automação (Spotify/Música) | Ler e controlar a música | Para a mídia |
-| Acessibilidade | Colar automaticamente, substituir o aviso de volume e brilho, badges do Dock | Opcional |
+| Acessibilidade | Colar automaticamente, substituir o aviso de volume e brilho, badges do Dock, modo limpeza | Opcional |
 | Gravação de Tela | Liquid Glass com refração e visualizador real | Opcional |
 | Calendários | Agenda e reuniões | Opcional |
 | Câmera | Aba Espelho | Opcional |
